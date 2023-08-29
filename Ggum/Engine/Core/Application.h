@@ -2,6 +2,8 @@
 
 #include "Base.hpp"
 
+#include "System/gg_system.h"
+
 namespace GG {
 
 class GG_API Application

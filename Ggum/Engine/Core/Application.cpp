@@ -18,7 +18,7 @@ Application* Application::Get()
 
 Application::Application()
 {
-
+	GG::Log::Init();
 }
 
 Application::~Application()
@@ -28,7 +28,7 @@ Application::~Application()
 
 void Application::Run()
 {
-	std::cout << "Hello GG Renderer!" << std::endl;
+	GG_INFO("Hello~!");
 }
 
 }
