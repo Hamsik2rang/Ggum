@@ -28,7 +28,7 @@ Application::~Application()
 
 void Application::Run()
 {
-	GG_INFO("Hello~!");
+	GG_TRACE("Application is Run.");
 }
 
 }

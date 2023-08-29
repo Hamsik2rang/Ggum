@@ -66,6 +66,7 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+[Bb]in-int/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -433,5 +434,8 @@ FodyWeavers.xsd
 
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
+**/bin/
+bin-int/
+*.idb/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,c++

@@ -11,5 +11,7 @@ void Log::Init()
 
 	s_logger = spdlog::stdout_color_mt("GG");
 	s_logger->set_level(spdlog::level::info);
+
+	s_logger->info("Log System Initialized.");
 }
 }
