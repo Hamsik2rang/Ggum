@@ -1,0 +1,3 @@
+[submodule "spdlog"]
+	path = Ggum/Dependencies/spdlog
+	url = https://github.com/hamsik2rang/spdlog
