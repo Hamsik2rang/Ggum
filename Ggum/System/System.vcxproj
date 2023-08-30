@@ -150,6 +150,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Base.hpp" />
+    <ClInclude Include="Core\Event\Event.hpp" />
+    <ClInclude Include="Core\Event\KeyEvent.hpp" />
     <ClInclude Include="gg_system.h" />
     <ClInclude Include="Core\Log.h" />
     <ClInclude Include="Graphics\GraphicsAPI.h" />

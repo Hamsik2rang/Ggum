@@ -25,8 +25,9 @@ private:
 }
 // Log Macros
 // 아래로 갈수록 위험 강도가 높습니다.
-#define GG_INFO(...)		GG::Log::GetLogger()->info(__VA_ARGS__)
 #define GG_TRACE(...)		GG::Log::GetLogger()->trace(__VA_ARGS__)
+#define GG_DEBUG(...)		GG::Log::GetLogger()->debug(__VA_ARGS__)
+#define GG_INFO(...)		GG::Log::GetLogger()->info(__VA_ARGS__)
 #define GG_WARNING(...)		GG::Log::GetLogger()->warn(__VA_ARGS__)
 #define GG_ERROR(...)		GG::Log::GetLogger()->error(__VA_ARGS__)
 #define GG_CRITICAL(...)	GG::Log::GetLogger()->critical(__VA_ARGS__)
