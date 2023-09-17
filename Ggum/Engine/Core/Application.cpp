@@ -19,11 +19,11 @@ Application* Application::Get()
 	return s_instance;
 }
 
-Application::Application()
+Application::Application(const char* title, uint32 width, uint32 height)
 {
 	GG::Log::Init();
 
-	WindowProperty prop("GG Engine", 1600, 1050);
+	WindowProperty prop(title, width, height);
 
 	_window = std::make_unique<Window>(prop);
 	_window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
@@ -51,7 +51,7 @@ void Application::Run()
 
 void Application::OnEvent(Event& e)
 {
-	GG_TRACE("Hello");
+	GG_TRACE("On {0} Event", e.GetName());
 }
 
 }
