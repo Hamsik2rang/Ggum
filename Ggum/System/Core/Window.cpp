@@ -8,10 +8,6 @@
 
 namespace GG {
 
-
-
-
-
 GG::Window::Window(const WindowProperty& prop)
 	: _data{}
 	, _hWnd{ nullptr }

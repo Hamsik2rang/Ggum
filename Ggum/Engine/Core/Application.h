@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.hpp"
+#include "Renderer/Renderer.h"
 
 #include "System/gg_system.h"
 
@@ -21,5 +22,6 @@ protected:
 private:
 	static Application* s_instance;
 	std::unique_ptr<Window> _window;
+	std::unique_ptr<Renderer> _renderer;
 };
 }

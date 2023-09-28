@@ -27,6 +27,9 @@ Application::Application(const char* title, uint32 width, uint32 height)
 
 	_window = std::make_unique<Window>(prop);
 	_window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
+
+	_renderer = std::make_unique<Renderer>();
+	_renderer->Init(_window->GetWindowHandle());
 }
 
 Application::~Application()
@@ -46,6 +49,8 @@ void Application::Run()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+
+		_renderer->Draw();
 	}
 }
 

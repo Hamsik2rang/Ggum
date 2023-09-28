@@ -30,5 +30,24 @@ inline std::string wstring_to_string(const std::wstring& wstr)
 	return str;
 }
 
+inline void swap_endian(uint32& bits)
+{
+	uint8* left = (uint8*)&bits;
+	uint8* right = left + 3;
+	std::swap(*left, *right);
+	left++;
+	right--;
+	std::swap(*left, *right);
+}
+
+template <typename T>
+inline T clamp(T value, T low, T high)
+{
+	value = value < low ? low : value > high ? high : value;
+
+	return value;
+}
+
+
 }
 }
