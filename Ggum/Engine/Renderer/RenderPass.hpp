@@ -30,8 +30,6 @@ enum RenderPassOrder
 class RenderPass
 {
 public:
-	friend RenderPath;
-
 	RenderPass(const std::string& name, const Renderer* const renderer, RenderPassOrder renderingOrder)
 		: _name{ name }
 		, _renderer{ renderer }

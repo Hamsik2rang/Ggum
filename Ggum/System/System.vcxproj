@@ -115,7 +115,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>SystemPch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)SystemPch.pch</PrecompiledHeaderOutputFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\spdlog\include;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\imgui\backends;$(SolutionDir)Dependencies\imgui;$(SolutionDir)Dependencies\spdlog\include;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,7 +136,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>SystemPch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)SystemPch.pch</PrecompiledHeaderOutputFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\spdlog\include;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\imgui\backends;$(SolutionDir)Dependencies\imgui;$(SolutionDir)Dependencies\spdlog\include;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -168,6 +168,13 @@
     <ClCompile Include="Core\Log.cpp" />
     <ClCompile Include="Core\Window.cpp" />
     <ClCompile Include="Graphics\GraphicsAPI.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_demo.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_draw.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_impl_win32.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_tables.cpp" />
+    <ClCompile Include="ImGui\ImGuiSource\imgui_widgets.cpp" />
     <ClCompile Include="Platform\Win32.cpp" />
     <ClCompile Include="SystemPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

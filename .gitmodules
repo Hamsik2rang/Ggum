@@ -1,3 +1,7 @@
 [submodule "spdlog"]
 	path = Ggum/Dependencies/spdlog
 	url = https://github.com/hamsik2rang/spdlog
+[submodule "imgui"]
+	path = Ggum/Dependencies/imgui
+	url = https://github.com/Hamsik2rang/ImGui
+	branch = docking
