@@ -2,7 +2,7 @@
 #include "Window.h"
 
 #include "Core/Log.h"
-#include "Utility.hpp"
+#include "Utility/Utility.hpp"
 
 #include "Platform/Win32.h"
 

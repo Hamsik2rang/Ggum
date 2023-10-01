@@ -2,7 +2,7 @@
 
 #include "GraphicsAPI.h"
 #include "Core/Log.h"
-#include "Utility.hpp"
+#include "Utility/Utility.hpp"
 
 #include <vulkan/vulkan_win32.h>
 #include <cstring>
@@ -272,7 +272,7 @@ void GraphicsAPI::createLogicalDevice()
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.queueCreateInfoCount = queueCreateInfos.size();
+	createInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<uint32>(deviceExtensions.size());
@@ -315,7 +315,7 @@ void GraphicsAPI::createSwapChain()
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	QueueFamilyIndices indices = findQueueFamilies(_physicalDevice);
-	uint32 queueFamilyIndices[] = { indices.graphicsFamily,indices.presentFamily };
+	uint32 queueFamilyIndices[] = { static_cast<uint32>(indices.graphicsFamily), static_cast<uint32>(indices.presentFamily) };
 
 	if (indices.graphicsFamily != indices.presentFamily)
 	{
@@ -682,7 +682,7 @@ void GraphicsAPI::createCommandBuffers()
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = _commandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = _commandBuffers.size();
+	allocInfo.commandBufferCount = static_cast<uint32>(_commandBuffers.size());
 
 	if (vkAllocateCommandBuffers(_device, &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
 	{

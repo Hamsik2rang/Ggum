@@ -28,8 +28,10 @@ Application::Application(const char* title, uint32 width, uint32 height)
 	_window = std::make_unique<Window>(prop);
 	_window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
-	_renderer = std::make_unique<Renderer>();
+	_renderer = new Renderer();
 	_renderer->Init(_window->GetWindowHandle());
+
+	_timer.Init();
 }
 
 Application::~Application()
@@ -42,13 +44,31 @@ void Application::Run()
 	GG_TRACE("Application is Run.");
 	MSG msg{};
 
+	_timer.Start();
+	float lastTime = 0.0f;
+
 	while (msg.message != WM_QUIT)
 	{
+		float curTime = _timer.Elapsed();
+		float deltaTime = curTime - lastTime;
+		lastTime = curTime;
+
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+
+		for (const auto& layer : _layerStack)
+		{
+			layer->OnUpdate(deltaTime);
+		}
+
+		for (const auto& layer : _layerStack)
+		{
+			layer->OnGUI();
+		}
+
 
 		_renderer->Draw();
 	}

@@ -1,7 +1,7 @@
 #include "SystemPch.h"
 #include "Win32.h"
 
-#include "Utility.hpp"
+#include "Utility/Utility.hpp"
 #include "Core/Window.h"
 #include "Core/Event/KeyEvent.hpp"
 #include "Core/Event/MouseEvent.hpp"

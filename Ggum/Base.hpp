@@ -12,6 +12,8 @@
 #else
 	#ifdef GG_CLIENT
 		#define GG_API __declspec(dllimport)
+	#else 
+		#define GG_API 
 	#endif
 #endif
 

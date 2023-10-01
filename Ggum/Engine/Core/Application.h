@@ -5,6 +5,7 @@
 
 #include "System/gg_system.h"
 
+
 namespace GG {
 
 class GG_API Application
@@ -21,7 +22,11 @@ protected:
 
 private:
 	static Application* s_instance;
+	Renderer* _renderer;
+
 	std::unique_ptr<Window> _window;
-	std::unique_ptr<Renderer> _renderer;
+	LayerStack _layerStack;
+	
+	Timer _timer;
 };
 }
