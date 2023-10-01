@@ -4,7 +4,7 @@
 
 namespace GG {
 
-class GG_API Renderer
+class Renderer
 {
 public:
 	void Init(HWND hWnd);

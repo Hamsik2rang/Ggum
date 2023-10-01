@@ -59,24 +59,31 @@ void Application::Run()
 			DispatchMessage(&msg);
 		}
 
-		for (const auto& layer : _layerStack)
+		for (const auto& layer : _renderPath)
 		{
 			layer->OnUpdate(deltaTime);
+			layer->OnRender();
 		}
 
-		for (const auto& layer : _layerStack)
+		_renderer->Draw();
+
+		for (const auto& layer : _renderPath)
 		{
 			layer->OnGUI();
 		}
-
-
-		_renderer->Draw();
 	}
 }
 
 void Application::OnEvent(Event& e)
 {
-	GG_TRACE("On {0} Event", e.GetName());
+	for (const auto& renderPass : _renderPath)
+	{
+		renderPass->OnEvent(e);
+		if (e.IsHandled())
+		{
+			break;
+		}
+	}
 }
 
 }

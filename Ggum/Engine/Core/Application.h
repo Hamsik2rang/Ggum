@@ -3,12 +3,14 @@
 #include "Base.hpp"
 #include "Renderer/Renderer.h"
 
+#include "Renderer/RenderPath.h"
+
 #include "System/gg_system.h"
 
 
 namespace GG {
 
-class GG_API Application
+class Application
 {
 public:
 	~Application();
@@ -25,7 +27,7 @@ private:
 	Renderer* _renderer;
 
 	std::unique_ptr<Window> _window;
-	LayerStack _layerStack;
+	RenderPath _renderPath;
 	
 	Timer _timer;
 };

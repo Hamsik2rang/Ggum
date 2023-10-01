@@ -5,17 +5,16 @@
 #endif
 
 
-
-// System은 lib을 뽑아내므로 dll을 이용하지 않습니다.
-#ifdef GG_ENGINE
-#define GG_API __declspec(dllexport)
-#else
-	#ifdef GG_CLIENT
-		#define GG_API __declspec(dllimport)
-	#else 
-		#define GG_API 
-	#endif
-#endif
+//// System은 lib을 뽑아내므로 dll을 이용하지 않습니다.
+//#ifdef GG_ENGINE
+//#define GG_API __declspec(dllexport)
+//#else
+//	#ifdef GG_CLIENT
+//		#define GG_API __declspec(dllimport)
+//	#else 
+//		#define GG_API 
+//	#endif
+//#endif
 
 #include <cstdint>
 #include <cassert>

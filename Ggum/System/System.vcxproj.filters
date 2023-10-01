@@ -51,12 +51,6 @@
     <ClInclude Include="Platform\Win32.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Layer.hpp">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\LayerStack.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Timer.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -78,9 +72,6 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\GraphicsAPI.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\LayerStack.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
