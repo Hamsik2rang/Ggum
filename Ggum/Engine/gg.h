@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Core/Application.h"
-#include "Core/Layer.hpp"
-#include "Core/LayerStack.h"
+#include "Renderer/RenderPass.hpp"
+#include "Renderer/RenderPath.h"
 
 #include "Renderer/Renderer.h"

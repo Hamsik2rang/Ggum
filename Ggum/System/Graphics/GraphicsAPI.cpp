@@ -863,7 +863,22 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	GG_WARNING("vaildation layer : {0}", pCallbackData->pMessage);
+	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+	{
+		GG_INFO("Validation Layer : {0}", pCallbackData->pMessage);
+	}
+	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		GG_WARNING("Validation Layer : {0}", pCallbackData->pMessage);
+	}
+	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+	{
+		GG_TRACE("Validation Layer : {0}", pCallbackData->pMessage);
+	}
+	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		GG_CRITICAL("vaildation layer : {0}", pCallbackData->pMessage);
+	}
 	return VK_FALSE;
 }
 
@@ -972,8 +987,8 @@ void GraphicsAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)_swapChainExtent.width;
-	viewport.height = (float)_swapChainExtent.height;
+	viewport.width = static_cast<float>(_swapChainExtent.width);
+	viewport.height = static_cast<float>(_swapChainExtent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);

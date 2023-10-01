@@ -29,7 +29,10 @@ void RenderPath::AddRenderPass(std::shared_ptr<RenderPass> renderPass)
 
 void RenderPath::DeleteRenderPass(std::shared_ptr<RenderPass> renderPass)
 {
-
+	if (std::find(_renderPasses.begin(), _renderPasses.end(), renderPass) != _renderPasses.end())
+	{
+		_renderPasses.remove(renderPass);
+	}
 }
 
 
