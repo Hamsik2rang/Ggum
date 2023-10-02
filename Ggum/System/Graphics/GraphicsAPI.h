@@ -20,6 +20,10 @@ public:
 	void WaitDeviceIdle();
 	void Release();
 
+	inline VkInstance GetInstance() { return _instance; }
+	inline VkDevice GetDevice() { return _device; }
+	inline VkSurfaceKHR GetSurface() { return _surface; }
+
 private:
 
 	struct QueueFamilyIndices

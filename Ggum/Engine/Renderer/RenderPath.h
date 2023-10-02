@@ -12,6 +12,8 @@ public:
 	RenderPath();
 	~RenderPath();
 
+	void Clear();
+
 	void AddRenderPass(std::shared_ptr<RenderPass> renderPass);
 	void DeleteRenderPass(std::shared_ptr<RenderPass> renderPass);
 

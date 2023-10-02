@@ -2,6 +2,7 @@
 
 #include "Base.hpp"
 #include "Renderer/Renderer.h"
+#include "Renderer/GUIRenderer.h"
 
 #include "Renderer/RenderPath.h"
 
@@ -14,17 +15,23 @@ class Application
 {
 public:
 	~Application();
+
 	void Run();
 
 	void OnEvent(Event& e);
 
+	void AddRenderPass(std::shared_ptr<RenderPass> renderPass);
+	void DeleteRenderPass(std::shared_ptr<RenderPass> renderPass);
+
 	static Application* Get();
+
 protected:
 	Application(const char* title = "GG Engine", uint32 width = 1600, uint32 height = 1050);
 
 private:
 	static Application* s_instance;
-	Renderer* _renderer;
+	std::shared_ptr<Renderer> _renderer;
+	std::unique_ptr<GUIRenderer> _guiRenderer;
 
 	std::unique_ptr<Window> _window;
 	RenderPath _renderPath;

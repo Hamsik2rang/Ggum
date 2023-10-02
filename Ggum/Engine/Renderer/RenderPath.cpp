@@ -16,6 +16,11 @@ RenderPath::~RenderPath()
 	_renderPasses.clear();
 }
 
+void RenderPath::Clear()
+{
+	_renderPasses.clear();
+}
+
 void RenderPath::AddRenderPass(std::shared_ptr<RenderPass> renderPass)
 {
 	_renderPasses.push_back(renderPass);

@@ -17,7 +17,7 @@ GG::Window::Window(const WindowProperty& prop)
 	_data.height = prop.height;
 	_data.isVerticalSync = false;
 
-	GG_INFO("Creating Window {0} ({1}, {2})", _data.title, _data.width, _data.height);
+	GG_INFO("Creating {0} Window ({1}, {2})", _data.title, _data.width, _data.height);
 	ATOM result = register_window_class(_data.title, window_process);
 
 	GG_INFO("register window class result is {0}", result);
@@ -38,7 +38,7 @@ GG::Window::Window(const WindowProperty& prop)
 
 	::SetWindowLongPtr(_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&_data));
 
-	GG_INFO("Window {0} is created.");
+	GG_INFO("{0} Window is created.", _data.title);
 }
 
 void Window::OnUpdate()

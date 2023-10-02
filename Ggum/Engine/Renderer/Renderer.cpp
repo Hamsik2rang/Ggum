@@ -5,13 +5,12 @@ namespace GG {
 
 
 
-void GG::Renderer::Init(HWND hWnd)
+void GG::Renderer::Init(std::shared_ptr<GraphicsAPI> api)
 {
-	_api = std::make_unique<GraphicsAPI>(hWnd);
-	_api->Init();
+	_api = api;
 }
 
-void Renderer::Draw()
+void Renderer::Submit()
 {
 	_api->Draw();
 	_api->WaitDeviceIdle();

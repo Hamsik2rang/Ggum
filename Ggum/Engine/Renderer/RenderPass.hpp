@@ -30,7 +30,7 @@ enum RenderPassOrder
 class RenderPass
 {
 public:
-	RenderPass(const std::string& name, const Renderer* const renderer, RenderPassOrder renderingOrder)
+	RenderPass(const std::string& name, const std::shared_ptr<Renderer> const renderer, RenderPassOrder renderingOrder)
 		: _name{ name }
 		, _renderer{ renderer }
 		, _order{ renderingOrder }
@@ -55,7 +55,7 @@ public:
 	inline std::string GetName() { return _name; }
 
 protected:
-	const Renderer* const _renderer;
+	const std::shared_ptr<Renderer> const _renderer;
 	std::string _name;
 	RenderPassOrder _order;
 };

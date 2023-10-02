@@ -4,18 +4,16 @@
 
 namespace GG {
 
-class Renderer : public IDrawable
+class GUIRenderer : public IDrawable
 {
 public:
-	virtual void Init(std::shared_ptr<GraphicsAPI> api) override;
+	virtual void Init(std::shared_ptr<GraphicsAPI> api);
 	virtual void Prepare() override;
 	virtual void Submit() override;
 	virtual void Present() override;
-	//...
 
 private:
 	//...
 };
-
 
 }

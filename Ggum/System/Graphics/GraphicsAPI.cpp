@@ -446,9 +446,9 @@ void GraphicsAPI::createGraphicsPipeline()
 		0x07000000, 0x09000000, 0x20000400, 0x0B000000, 0x06000000, 0x0A000000, 0x3B000400, 0x0B000000,
 		0x0C000000, 0x06000000, 0x2B000400, 0x06000000, 0x0D000000, 0x0000803F, 0x2C000500, 0x07000000,
 		0x0E000000, 0x0D000000, 0x0D000000, 0x2B000400, 0x06000000, 0x0F000000, 0x000080BF, 0x2C000500,
-		0x07000000, 0x10000000, 0x0D000000, 0x0F000000, 0x2C000500, 0x07000000, 0x11000000, 0x0F000000,
+		0x07000000, 0x10000000, 0x0F000000, 0x0F000000, 0x2C000500, 0x07000000, 0x11000000, 0x0D000000,
 		0x0F000000, 0x2C000500, 0x07000000, 0x12000000, 0x0F000000, 0x0D000000, 0x2C000900, 0x0A000000,
-		0x13000000, 0x0E000000, 0x10000000, 0x11000000, 0x0E000000, 0x11000000, 0x12000000, 0x17000400,
+		0x13000000, 0x0E000000, 0x10000000, 0x11000000, 0x0E000000, 0x12000000, 0x10000000, 0x17000400,
 		0x14000000, 0x06000000, 0x04000000, 0x2B000400, 0x08000000, 0x15000000, 0x01000000, 0x1C000400,
 		0x16000000, 0x06000000, 0x15000000, 0x1E000600, 0x17000000, 0x14000000, 0x06000000, 0x16000000,
 		0x16000000, 0x20000400, 0x18000000, 0x03000000, 0x17000000, 0x3B000400, 0x18000000, 0x19000000,
@@ -918,7 +918,8 @@ VkExtent2D GraphicsAPI::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabil
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 
-		VkExtent2D actualExtent = {
+		VkExtent2D actualExtent =
+		{
 			static_cast<uint32_t>(width),
 			static_cast<uint32_t>(height)
 		};
@@ -976,7 +977,7 @@ void GraphicsAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = _swapChainExtent;
 
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+	VkClearValue clearColor = { {{1.0f, 0.0f, 1.0f, 1.0f}} };
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
@@ -998,7 +999,7 @@ void GraphicsAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	scissor.extent = _swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	vkCmdDraw(commandBuffer, 6, 1, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
