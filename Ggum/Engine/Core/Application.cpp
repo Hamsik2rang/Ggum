@@ -28,13 +28,14 @@ Application::Application(const char* title, uint32 width, uint32 height)
 	_window = std::make_unique<Window>(prop);
 	_window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
-	std::shared_ptr<GraphicsAPI> api = std::make_shared<GraphicsAPI>(_window->GetWindowHandle());
+	std::shared_ptr<GraphicsAPI> api = std::make_shared<GraphicsAPI>(_window->GetWindowHandle(), width, height);
+	api->Init();
 
 	_renderer = std::make_shared<Renderer>();
-	_renderer->Init(api);
+	_renderer->Init(_window->GetWindowHandle(), api);
 
 	_guiRenderer = std::make_unique<GUIRenderer>();
-	_guiRenderer->Init(api);
+	_guiRenderer->Init(_window->GetWindowHandle(), api);
 
 	_timer.Init();
 }
@@ -64,6 +65,9 @@ void Application::Run()
 			DispatchMessage(&msg);
 		}
 
+
+
+		// Rendering---------------------
 		_renderer->Prepare();
 
 		for (const auto& renderPass : _renderPath)
@@ -74,10 +78,24 @@ void Application::Run()
 
 		_renderer->Submit();
 		_renderer->Present();
-
+		// Rendering---------------------
+		
+		// GUI Rendering-----------------
 		_guiRenderer->Prepare();
+
+		for (const auto& renderPass : _renderPath)
+		{
+			renderPass->OnGUI();
+		}
+
 		_guiRenderer->Submit();
 		_guiRenderer->Present();
+		// GUI Rendering-----------------
+
+		// Window Update-----------------
+		_window->OnUpdate();
+		// Window Update-----------------
+
 	}
 }
 

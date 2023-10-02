@@ -7,6 +7,11 @@
 #include "Core/Event/MouseEvent.hpp"
 #include "Core/Event/ApplicationEvent.hpp"
 
+#include "Graphics/GraphicsAPI.h"
+
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace GG {
 
 ATOM register_window_class(const std::string& title, WindowsCallback callback)
@@ -57,6 +62,7 @@ HWND init_instance(const std::string& title, uint32 width, uint32 height, LONG_P
 	return hWnd;
 }
 
+
 LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	Window::WindowData* data = reinterpret_cast<Window::WindowData*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
@@ -64,6 +70,11 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if (nullptr == data)
 	{
 		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	{
+		return true;
 	}
 
 	switch (msg)

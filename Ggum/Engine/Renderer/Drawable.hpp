@@ -10,7 +10,7 @@ class IDrawable
 public:
 	virtual ~IDrawable() {}
 
-	virtual void Init(std::shared_ptr<GraphicsAPI> api) = 0;
+	virtual void Init(HWND hWnd, std::shared_ptr<GraphicsAPI> api) = 0;
 	virtual void Prepare() = 0;
 	virtual void Submit() = 0;
 	virtual void Present() = 0;

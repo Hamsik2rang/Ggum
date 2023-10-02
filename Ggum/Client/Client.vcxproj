@@ -112,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GG_GRAPHICS_API_VULKAN;GG_CLIENT;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir)Dependencies\spdlog\include;$(SolutionDir)Engine;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\imgui\backends;$(SolutionDir)Dependencies\imgui;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir)Dependencies\spdlog\include;$(SolutionDir)Engine;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +129,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GG_GRAPHICS_API_VULKAN;GG_CLIENT;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir)Dependencies\spdlog\include;$(SolutionDir)Engine;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\imgui\backends;$(SolutionDir)Dependencies\imgui;C:\VulkanSDK\1.3.261.1\Include;$(SolutionDir)Dependencies\spdlog\include;$(SolutionDir)Engine;$(SolutionDir);$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

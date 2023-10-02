@@ -30,4 +30,4 @@ private:
 #define GG_INFO(...)		GG::Log::GetLogger()->info(__VA_ARGS__)
 #define GG_WARNING(...)		GG::Log::GetLogger()->warn(__VA_ARGS__)
 #define GG_ERROR(...)		GG::Log::GetLogger()->error(__VA_ARGS__)
-#define GG_CRITICAL(...)	GG::Log::GetLogger()->critical(__VA_ARGS__)
+#define GG_CRITICAL(...)	{ GG::Log::GetLogger()->critical(__VA_ARGS__); abort(); }

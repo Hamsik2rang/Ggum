@@ -4,6 +4,10 @@
 
 #include "Base.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_vulkan.h"
+
 #include <vector>
 
 namespace GG {
@@ -12,17 +16,17 @@ class GraphicsAPI
 {
 public:
 	GraphicsAPI() = delete;
-	GraphicsAPI(HWND hWnd);
+	GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferHeight);
 	~GraphicsAPI();
 	
 	void Init();
+
 	void Draw();
 	void WaitDeviceIdle();
 	void Release();
 
-	inline VkInstance GetInstance() { return _instance; }
-	inline VkDevice GetDevice() { return _device; }
-	inline VkSurfaceKHR GetSurface() { return _surface; }
+	void RenderImGui();
+	void PresentImGui();
 
 private:
 
@@ -44,6 +48,8 @@ private:
 		std::vector<VkPresentModeKHR> presentModes;
 	};
 
+	void initImGui();
+
 	void createInstance();
 	void setupDebugMessenger();
 	void createSurface();
@@ -57,6 +63,7 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 	void createSyncObjects();
+	void createDescriptorPool();
 
 	void cleanupSwapChain();
 
@@ -104,15 +111,20 @@ private:
 	std::vector<VkFramebuffer>		_swapChainFramebuffers;
 	VkCommandPool					_commandPool;
 	std::vector<VkCommandBuffer>	_commandBuffers;
+	VkDescriptorPool				_descriptorPool;
 
 	std::vector<VkSemaphore>		_imageAvailableSemaphores;
 	std::vector<VkSemaphore>		_renderFinishedSemaphores;
 	std::vector<VkFence>			_inFlightFences;
 	std::vector<VkFence>			_imagesInFlight;
 
-	size_t							_submitIndex;
+	uint32							_submitIndex;
+	uint32							_frameBufferWidth;
+	uint32							_frameBufferHeight;
 
-	static const size_t				s_maxSubmitIndex = 2;
+	ImGui_ImplVulkanH_Window		_imguiWindow;
+
+	static const uint32				s_maxSubmitIndex = 3;
 };
 
 }
