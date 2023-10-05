@@ -34,8 +34,7 @@ Application::Application(const char* title, uint32 width, uint32 height)
 	_renderer = std::make_shared<Renderer>();
 	_renderer->Init(_window->GetWindowHandle(), api);
 
-	_guiRenderer = std::make_unique<GUIRenderer>();
-	_guiRenderer->Init(_window->GetWindowHandle(), api);
+	_renderPath.SetRenderer(_renderer);
 
 	_timer.Init();
 }
@@ -77,20 +76,19 @@ void Application::Run()
 		}
 
 		_renderer->Submit();
-		_renderer->Present();
 		// Rendering---------------------
 		
 		// GUI Rendering-----------------
-		_guiRenderer->Prepare();
+		_renderer->PrepareGUI();
 
 		for (const auto& renderPass : _renderPath)
 		{
 			renderPass->OnGUI();
 		}
-
-		_guiRenderer->Submit();
-		_guiRenderer->Present();
+		_renderer->SubmitGUI();
 		// GUI Rendering-----------------
+		_renderer->Present();
+
 
 		// Window Update-----------------
 		_window->OnUpdate();

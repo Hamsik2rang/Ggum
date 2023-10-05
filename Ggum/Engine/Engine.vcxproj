@@ -156,7 +156,6 @@
     <ClInclude Include="..\Base.hpp" />
     <ClInclude Include="Core\Application.h" />
     <ClInclude Include="Renderer\Drawable.hpp" />
-    <ClInclude Include="Renderer\GUIRenderer.h" />
     <ClInclude Include="Renderer\RenderPass.hpp" />
     <ClInclude Include="Renderer\RenderPath.h" />
     <ClInclude Include="EnginePch.h" />
@@ -165,7 +164,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Application.cpp" />
-    <ClCompile Include="Renderer\GUIRenderer.cpp" />
     <ClCompile Include="Renderer\RenderPath.cpp" />
     <ClCompile Include="EnginePch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

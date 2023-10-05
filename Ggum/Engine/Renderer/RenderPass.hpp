@@ -9,6 +9,8 @@
 
 namespace GG {
 
+class RenderPath;
+
 enum RenderPassOrder
 {
 	BeforeRendering = 0,
@@ -29,10 +31,12 @@ enum RenderPassOrder
 
 class RenderPass
 {
+	friend RenderPath;
+
 public:
-	RenderPass(const std::string& name, const std::shared_ptr<Renderer> const renderer, RenderPassOrder renderingOrder)
+	RenderPass(const std::string& name, RenderPassOrder renderingOrder)
 		: _name{ name }
-		, _renderer{ renderer }
+		, _renderer{ nullptr }
 		, _order{ renderingOrder }
 	{}
 
@@ -55,7 +59,7 @@ public:
 	inline std::string GetName() { return _name; }
 
 protected:
-	const std::shared_ptr<Renderer> const _renderer;
+	std::shared_ptr<Renderer> _renderer;
 	std::string _name;
 	RenderPassOrder _order;
 };

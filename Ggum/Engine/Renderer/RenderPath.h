@@ -12,6 +12,7 @@ public:
 	RenderPath();
 	~RenderPath();
 
+	void SetRenderer(std::shared_ptr<Renderer> renderer);
 	void Clear();
 
 	void AddRenderPass(std::shared_ptr<RenderPass> renderPass);
@@ -24,6 +25,8 @@ public:
 private:
 	std::list<std::shared_ptr<RenderPass>> _renderPasses;
 	std::list<std::shared_ptr<RenderPass>>::iterator _lastPassIterator;
+
+	std::shared_ptr<Renderer> _renderer;
 };
 
 }

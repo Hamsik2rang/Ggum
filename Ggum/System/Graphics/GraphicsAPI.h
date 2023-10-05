@@ -26,7 +26,9 @@ public:
 	void Release();
 
 	void RenderImGui();
-	void PresentImGui();
+
+	void Begin();
+	void End();
 
 private:
 
@@ -66,6 +68,15 @@ private:
 	void createDescriptorPool();
 
 	void cleanupSwapChain();
+
+	void beginCommandBuffer(VkCommandBuffer commandBuffer);
+	void endCommandBuffer(VkCommandBuffer commandBuffer);
+	void beginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer framebuffer);
+	void endRenderPass(VkCommandBuffer commandBuffer);
+	void bindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
+	void setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height);
+	void setScissor(VkCommandBuffer commandBuffer, int x = 0, int y = 0);
+	void draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
 
 	bool checkValidationLayerSupport();
 	bool isDeviceSuitable(VkPhysicalDevice device);
@@ -119,6 +130,7 @@ private:
 	std::vector<VkFence>			_imagesInFlight;
 
 	uint32							_submitIndex;
+	uint32							_imageIndex;
 	uint32							_frameBufferWidth;
 	uint32							_frameBufferHeight;
 

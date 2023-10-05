@@ -88,34 +88,6 @@ void GraphicsAPI::Init()
 
 void GraphicsAPI::initImGui()
 {
-	//_imguiWindow.Surface = _surface;
-	//_imguiWindow.Swapchain = _swapChain;
-
-	//const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-	//const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-	//_imguiWindow.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(
-	//	_physicalDevice,
-	//	_surface,
-	//	requestSurfaceImageFormat,
-	//	static_cast<size_t>(IM_ARRAYSIZE(requestSurfaceImageFormat)),
-	//	requestSurfaceColorSpace
-	//);
-
-	//VkPresentModeKHR presentModes[] = { VK_PRESENT_MODE_FIFO_KHR };
-	//_imguiWindow.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(_physicalDevice, _surface, &presentModes[0], IM_ARRAYSIZE(presentModes));
-	//ImGui_ImplVulkanH_CreateOrResizeWindow(_instance,
-	//	_physicalDevice,
-	//	_device,
-	//	&_imguiWindow,
-	//	static_cast<uint32>(findQueueFamilies(_physicalDevice).graphicsFamily),
-	//	nullptr,
-	//	_frameBufferWidth,
-	//	_frameBufferHeight,
-	//	static_cast<uint32>(_swapChainImages.size())
-	//);
-
-	//_swapChain = _imguiWindow.Swapchain;
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
@@ -192,67 +164,13 @@ void GraphicsAPI::initImGui()
 
 void GraphicsAPI::Draw()
 {
-	vkWaitForFences(_device, 1, &_inFlightFences[_submitIndex], VK_TRUE, UINT64_MAX);
-
-	uint32 imageIndex;
-	VkResult result = vkAcquireNextImageKHR(_device, _swapChain, UINT64_MAX, _imageAvailableSemaphores[_submitIndex], VK_NULL_HANDLE, &imageIndex);
-
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-	{
-		GG_CRITICAL("Failed to acquire swap chain image!");
-	}
-
-	// Check if a previous frame is using this image (i.e. there is its fence to wait on)
-	if (_imagesInFlight[imageIndex] != VK_NULL_HANDLE)
-	{
-		vkWaitForFences(_device, 1, &_imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
-	}
-	// Mark the image as now being in use by this frame
-	_imagesInFlight[imageIndex] = _inFlightFences[_submitIndex];
-
-	vkResetCommandBuffer(_commandBuffers[imageIndex], 0);
-	recordCommandBuffer(_commandBuffers[imageIndex], imageIndex);
-
-	//VkSubmitInfo submitInfo{};
-	//submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	//VkSemaphore waitSemaphores[]{ _imageAvailableSemaphores[_submitIndex] };
-	//VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	//submitInfo.waitSemaphoreCount = 1;
-	//submitInfo.pWaitSemaphores = waitSemaphores;
-	//submitInfo.pWaitDstStageMask = waitStages;
-	//submitInfo.commandBufferCount = 1;
-	//submitInfo.pCommandBuffers = &_commandBuffers[imageIndex];
-
-	//VkSemaphore signalSemaphores[] = { _renderFinishedSemaphores[_submitIndex] };
-	//submitInfo.signalSemaphoreCount = 1;
-	//submitInfo.pSignalSemaphores = signalSemaphores;
-
-	//vkResetFences(_device, 1, &_inFlightFences[_submitIndex]);
-
-	//if (vkQueueSubmit(_graphicsQueue, 1, &submitInfo, _inFlightFences[_submitIndex]) != VK_SUCCESS)
-	//{
-	//	throw std::runtime_error("failed to submit draw command buffer!");
-	//}
-
-	//VkPresentInfoKHR presentInfo = {};
-	//presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	//presentInfo.waitSemaphoreCount = 1;
-	//presentInfo.pWaitSemaphores = signalSemaphores;
-
-	//VkSwapchainKHR swapChains[] = { _swapChain };
-	//presentInfo.swapchainCount = 1;
-	//presentInfo.pSwapchains = swapChains;
-	//presentInfo.pImageIndices = &imageIndex;
-	//presentInfo.pResults = nullptr;
-
-	//result = vkQueuePresentKHR(_presentQueue, &presentInfo);
-	//if (result != VK_SUCCESS)
-	//{
-	//	GG_CRITICAL("Failed to present swapchain image!");
-	//}
-
-	//_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
+	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
+	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
+	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
+	setViewport(_commandBuffers[_imageIndex], 0.0f, 0.0f, static_cast<float>(_swapChainExtent.width), static_cast<float>(_swapChainExtent.height));
+	setScissor(_commandBuffers[_imageIndex], 0, 0);
+	draw(_commandBuffers[_imageIndex], 6, 1, 0, 0);
+	endRenderPass(_commandBuffers[_imageIndex]);
 }
 
 void GraphicsAPI::WaitDeviceIdle()
@@ -287,115 +205,85 @@ void GraphicsAPI::Release()
 
 void GraphicsAPI::RenderImGui()
 {
-	//uint32 imageIndex;
-
-	//VkResult result = vkAcquireNextImageKHR(_device, _swapChain, UINT64_MAX, _imageAvailableSemaphores[_submitIndex], VK_NULL_HANDLE, &imageIndex);
-	//if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-	//{
-	//	GG_CRITICAL("You Should Rebuild Swapchain!");
-	//	// rebuild swapchain
-	//	return;
-	//}
-	//if (result != VK_SUCCESS)
-	//{
-	//	GG_CRITICAL("Fail to acquire next image to Render ImGui!");
-	//}
-
-	//{
-	//	if (vkWaitForFences(_device, 1, &_inFlightFences[imageIndex], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
-	//	{
-	//		GG_CRITICAL("Fail to wait fences to Render ImGui!");
-	//	}
-
-	//	if (vkResetFences(_device, 1, &_inFlightFences[imageIndex]) != VK_SUCCESS)
-	//	{
-	//		GG_CRITICAL("Fail to reset fences to Render ImGui!");
-	//	}
-	//}
-	//{
-	//	if (vkResetCommandPool(_device, _commandPool, 0) != VK_SUCCESS)
-	//	{
-	//		GG_CRITICAL("Fail to reset command pool to Render ImGui!");
-	//	}
-
-	//	VkCommandBufferBeginInfo info{};
-	//	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	//	info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	//	if (vkBeginCommandBuffer(_commandBuffers[imageIndex], &info) != VK_SUCCESS)
-	//	{
-	//		GG_CRITICAL("Fail to begin command buffer to Render ImGui!");
-	//	}
-	//}
-	{
-		VkClearValue clearValue;
-		clearValue.color.float32[0] = 1.0f;
-		clearValue.color.float32[1] = 0.0f;
-		clearValue.color.float32[2] = 1.0f;
-		clearValue.color.float32[3] = 1.0f;
-
-		VkRenderPassBeginInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.renderPass = _renderPass;
-		info.framebuffer = _swapChainFramebuffers[_submitIndex];
-		info.renderArea.extent = _swapChainExtent;
-		info.clearValueCount = 1;
-		info.pClearValues = &clearValue;
-		vkCmdBeginRenderPass(_commandBuffers[_submitIndex], &info, VK_SUBPASS_CONTENTS_INLINE);
-	}
+	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 
 	ImDrawData* mainDrawData = ImGui::GetDrawData();
 
 	ImGui_ImplVulkan_RenderDrawData(mainDrawData, _commandBuffers[_submitIndex]);
 
-	vkCmdEndRenderPass(_commandBuffers[_submitIndex]);
-	{
-		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		VkSubmitInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &_imageAvailableSemaphores[_submitIndex];
-		info.pWaitDstStageMask = &waitStage;
-		info.commandBufferCount = 1;
-		info.pCommandBuffers = &_commandBuffers[_submitIndex];
-		info.signalSemaphoreCount = 1;
-		info.pSignalSemaphores = &_renderFinishedSemaphores[_submitIndex];
-
-		if (vkEndCommandBuffer(_commandBuffers[_submitIndex]) != VK_SUCCESS)
-		{
-			GG_CRITICAL("Fail to end command buffer to Render ImGui!");
-		}
-
-		vkResetFences(_device, 1, &_inFlightFences[_submitIndex]);
-
-		if (vkQueueSubmit(_graphicsQueue, 1, &info, _inFlightFences[_submitIndex]) != VK_SUCCESS)
-		{
-			GG_CRITICAL("Fail to submit graphics queue to Render ImGui!");
-		}
-	}
+	endRenderPass(_commandBuffers[_imageIndex]);
+	endCommandBuffer(_commandBuffers[_imageIndex]);
 }
 
-void GraphicsAPI::PresentImGui()
+
+void GraphicsAPI::Begin()
 {
-	VkSemaphore renderCompleteSemaphore = _renderFinishedSemaphores[_submitIndex];
-	VkPresentInfoKHR info{};
-	info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	info.waitSemaphoreCount = 1;
-	info.pWaitSemaphores = &renderCompleteSemaphore;
-	info.swapchainCount = 1;
-	info.pSwapchains = &_swapChain;
-	info.pImageIndices = &_submitIndex;
-	VkResult result = vkQueuePresentKHR(_presentQueue, &info);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	vkWaitForFences(_device, 1, &_inFlightFences[_submitIndex], VK_TRUE, UINT64_MAX);
+
+	VkResult result = vkAcquireNextImageKHR(_device, _swapChain, UINT64_MAX, _imageAvailableSemaphores[_submitIndex], VK_NULL_HANDLE, &_imageIndex);
+
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
-		// rebuild swapchain.
-		return;
-	}
-	if (result != VK_SUCCESS)
-	{
-		GG_CRITICAL("Fail to present graphics queue!");
+		GG_CRITICAL("Failed to acquire swap chain image!");
 	}
 
-	_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
+	// Check if a previous frame is using this image (i.e. there is its fence to wait on)
+	if (_imagesInFlight[_imageIndex] != VK_NULL_HANDLE)
+	{
+		vkWaitForFences(_device, 1, &_imagesInFlight[_imageIndex], VK_TRUE, UINT64_MAX);
+	}
+	// Mark the image as now being in use by this frame
+	_imagesInFlight[_imageIndex] = _inFlightFences[_submitIndex];
+
+	vkResetCommandBuffer(_commandBuffers[_imageIndex], 0);
+
+	beginCommandBuffer(_commandBuffers[_imageIndex]);
+}
+
+void GraphicsAPI::End()
+{
+	endCommandBuffer(_commandBuffers[_imageIndex]);
+
+	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	VkSubmitInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	info.waitSemaphoreCount = 1;
+	info.pWaitSemaphores = &_imageAvailableSemaphores[_imageIndex];
+	info.pWaitDstStageMask = &waitStage;
+	info.commandBufferCount = 1;
+	info.pCommandBuffers = &_commandBuffers[_imageIndex];
+	info.signalSemaphoreCount = 1;
+	info.pSignalSemaphores = &_renderFinishedSemaphores[_imageIndex];
+
+	vkResetFences(_device, 1, &_inFlightFences[_imageIndex]);
+
+	if (vkQueueSubmit(_graphicsQueue, 1, &info, _inFlightFences[_imageIndex]) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Fail to submit graphics queue to Render ImGui!");
+	}
+
+	{
+		VkSemaphore renderCompleteSemaphore = _renderFinishedSemaphores[_submitIndex];
+		VkPresentInfoKHR info{};
+		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		info.waitSemaphoreCount = 1;
+		info.pWaitSemaphores = &renderCompleteSemaphore;
+		info.swapchainCount = 1;
+		info.pSwapchains = &_swapChain;
+		info.pImageIndices = &_submitIndex;
+		VkResult result = vkQueuePresentKHR(_presentQueue, &info);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			// rebuild swapchain.
+			return;
+		}
+		if (result != VK_SUCCESS)
+		{
+			GG_CRITICAL("Fail to present graphics queue!");
+		}
+
+		_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
+	}
 }
 
 void GraphicsAPI::createInstance()
@@ -999,6 +887,79 @@ void GraphicsAPI::cleanupSwapChain()
 	vkDestroySwapchainKHR(_device, _swapChain, nullptr);
 }
 
+void GraphicsAPI::beginCommandBuffer(VkCommandBuffer commandBuffer)
+{
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to begin recording command buffer!");
+	}
+}
+
+void GraphicsAPI::endCommandBuffer(VkCommandBuffer commandBuffer)
+{
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Fail to end command buffer!");
+	}
+}
+
+void GraphicsAPI::beginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer framebuffer)
+{
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = _renderPass;
+	renderPassInfo.framebuffer = framebuffer;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = _swapChainExtent;
+
+	VkClearValue clearColor = { {{1.0f, 0.0f, 1.0f, 1.0f}} };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void GraphicsAPI::endRenderPass(VkCommandBuffer commandBuffer)
+{
+	vkCmdEndRenderPass(commandBuffer);
+}
+
+void GraphicsAPI::bindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline)
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+}
+
+void GraphicsAPI::setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height)
+{
+	VkViewport viewport{};
+	viewport.x = x;
+	viewport.y = y;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+}
+
+void GraphicsAPI::setScissor(VkCommandBuffer commandBuffer, int x, int y)
+{
+	VkRect2D scissor{};
+	scissor.offset = { x, y };
+	scissor.extent = _swapChainExtent;
+
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
+
+void GraphicsAPI::draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance)
+{
+	vkCmdDraw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
 bool GraphicsAPI::checkValidationLayerSupport()
 {
 	uint32 layerCount;
@@ -1225,51 +1186,7 @@ VkShaderModule GraphicsAPI::createShaderModule(uint32* spvCode, size_t size)
 
 void GraphicsAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-	{
-		GG_CRITICAL("Failed to begin recording command buffer!");
-	}
-
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = _renderPass;
-	renderPassInfo.framebuffer = _swapChainFramebuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = _swapChainExtent;
-
-	VkClearValue clearColor = { {{1.0f, 0.0f, 1.0f, 1.0f}} };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
-
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
-
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(_swapChainExtent.width);
-	viewport.height = static_cast<float>(_swapChainExtent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = _swapChainExtent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-	vkCmdDraw(commandBuffer, 6, 1, 0, 0);
-
-	vkCmdEndRenderPass(commandBuffer);
-
-	//if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-	//{
-	//	GG_CRITICAL("Failed to record command buffer!");
-	//}
 }
 
 VkResult GraphicsAPI::createDebugUtilsMessengerEXT(VkInstance instance,

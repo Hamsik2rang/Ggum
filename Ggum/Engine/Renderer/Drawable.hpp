@@ -14,6 +14,9 @@ public:
 	virtual void Prepare() = 0;
 	virtual void Submit() = 0;
 	virtual void Present() = 0;
+	virtual void PrepareGUI() = 0;
+	virtual void SubmitGUI() = 0;
+	virtual void PresentGUI() = 0;
 	//...
 
 protected:
