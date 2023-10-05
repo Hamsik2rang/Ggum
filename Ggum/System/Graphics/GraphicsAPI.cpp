@@ -245,45 +245,43 @@ void GraphicsAPI::End()
 	endCommandBuffer(_commandBuffers[_imageIndex]);
 
 	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	VkSubmitInfo info{};
-	info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	info.waitSemaphoreCount = 1;
-	info.pWaitSemaphores = &_imageAvailableSemaphores[_imageIndex];
-	info.pWaitDstStageMask = &waitStage;
-	info.commandBufferCount = 1;
-	info.pCommandBuffers = &_commandBuffers[_imageIndex];
-	info.signalSemaphoreCount = 1;
-	info.pSignalSemaphores = &_renderFinishedSemaphores[_imageIndex];
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &_imageAvailableSemaphores[_imageIndex];
+	submitInfo.pWaitDstStageMask = &waitStage;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &_commandBuffers[_imageIndex];
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &_renderFinishedSemaphores[_imageIndex];
 
 	vkResetFences(_device, 1, &_inFlightFences[_imageIndex]);
 
-	if (vkQueueSubmit(_graphicsQueue, 1, &info, _inFlightFences[_imageIndex]) != VK_SUCCESS)
+	if (vkQueueSubmit(_graphicsQueue, 1, &submitInfo, _inFlightFences[_imageIndex]) != VK_SUCCESS)
 	{
 		GG_CRITICAL("Fail to submit graphics queue to Render ImGui!");
 	}
 
+	VkSemaphore renderCompleteSemaphore = _renderFinishedSemaphores[_submitIndex];
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &renderCompleteSemaphore;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &_swapChain;
+	presentInfo.pImageIndices = &_submitIndex;
+	VkResult result = vkQueuePresentKHR(_presentQueue, &presentInfo);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
-		VkSemaphore renderCompleteSemaphore = _renderFinishedSemaphores[_submitIndex];
-		VkPresentInfoKHR info{};
-		info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &renderCompleteSemaphore;
-		info.swapchainCount = 1;
-		info.pSwapchains = &_swapChain;
-		info.pImageIndices = &_submitIndex;
-		VkResult result = vkQueuePresentKHR(_presentQueue, &info);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-		{
-			// rebuild swapchain.
-			return;
-		}
-		if (result != VK_SUCCESS)
-		{
-			GG_CRITICAL("Fail to present graphics queue!");
-		}
-
-		_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
+		// rebuild swapchain.
+		return;
 	}
+	if (result != VK_SUCCESS)
+	{
+		GG_CRITICAL("Fail to present graphics queue!");
+	}
+
+	_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
 }
 
 void GraphicsAPI::createInstance()
