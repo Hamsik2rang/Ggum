@@ -33,7 +33,7 @@ void Renderer::SubmitGUI()
 {
 	ImGui::Render();
 	ImDrawData* mainDrawData = ImGui::GetDrawData();
-	const bool isMainWindowMinimized = (mainDrawData->DisplaySize.x <= 0.0f || mainDrawData->DisplaySize.y <= 0.0f);
+	const bool isMainWindowMinimized = !(mainDrawData->DisplaySize.x <= 0.0f || mainDrawData->DisplaySize.y <= 0.0f);
 
 	if (isMainWindowMinimized)
 	{

@@ -212,7 +212,6 @@ void GraphicsAPI::RenderImGui()
 	ImGui_ImplVulkan_RenderDrawData(mainDrawData, _commandBuffers[_submitIndex]);
 
 	endRenderPass(_commandBuffers[_imageIndex]);
-	endCommandBuffer(_commandBuffers[_imageIndex]);
 }
 
 

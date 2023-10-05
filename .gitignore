@@ -60,3 +60,6 @@ bld/
 [Ll]ogs/
 
 [Bb]in-int/
+
+# imgui
+*.ini
