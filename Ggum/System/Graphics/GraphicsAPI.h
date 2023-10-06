@@ -91,8 +91,6 @@ private:
 
 	VkShaderModule createShaderModule(uint32* spvCode, size_t size);
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-
 	VkResult createDebugUtilsMessengerEXT(VkInstance instance,
 		const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 		const VkAllocationCallbacks* pAllocator,

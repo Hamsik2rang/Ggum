@@ -1211,11 +1211,6 @@ VkShaderModule GraphicsAPI::createShaderModule(uint32* spvCode, size_t size)
 	return shaderModule;
 }
 
-void GraphicsAPI::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
-{
-
-}
-
 VkResult GraphicsAPI::createDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator,
