@@ -44,7 +44,7 @@ void TestRenderPass::OnGUI()
 	static float f = 0.0f;
 	static int counter = 0;
 
-	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+	ImGui::Begin(_name.c_str());                          // Create a window called "Hello, world!" and append into it.
 
 	ImGui::Text("Welcome to GG Engine!");                   // Display some text (you can use a format strings too)
 	ImGui::Checkbox("Demo Window", &showDemoWindow);        // Edit bools storing our window open/close state

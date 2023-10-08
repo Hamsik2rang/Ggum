@@ -9,13 +9,13 @@ namespace GG {
 class WindowResizeEvent : public Event
 {
 private:
-	uint32_t _width;
-	uint32_t _height;
+	uint32 _width;
+	uint32 _height;
 
 public:
 	WindowResizeEvent(uint32_t width, uint32_t height)
-		:_width(width)
-		,_height(height)
+		: _width(width)
+		, _height(height)
 	{}
 
 	virtual std::string ToString() const override
@@ -25,6 +25,9 @@ public:
 
 		return ss.str();
 	}
+
+	uint32 GetWidth() { return _width; }
+	uint32 GetHeight() { return _height; }
 
 	EVENT_CLASS_TYPE(WindowResized)
 	EVENT_CLASS_CATEGORY(EventCategoryApplication)
