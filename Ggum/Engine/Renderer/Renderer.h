@@ -15,6 +15,7 @@ public:
 	virtual void Present() override;
 	virtual void PresentGUI() override;
 	//...
+	virtual void OnResize(uint32 width, uint32 height) override;
 
 private:
 	//...

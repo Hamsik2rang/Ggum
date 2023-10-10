@@ -19,6 +19,8 @@ public:
 	virtual void PresentGUI() = 0;
 	//...
 
+	virtual void OnResize(uint32 width, uint32 height) = 0;
+
 protected:
 	std::shared_ptr<GraphicsAPI> _api = nullptr;
 	//... 

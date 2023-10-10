@@ -67,6 +67,7 @@ private:
 	void createSyncObjects();
 	void createDescriptorPool();
 
+	void recreateSwapChain();
 	void cleanupSwapChain();
 
 	void beginCommandBuffer(VkCommandBuffer commandBuffer);
@@ -100,6 +101,9 @@ private:
 		VkDebugUtilsMessengerEXT callback,
 		const VkAllocationCallbacks* pAllocator);
 
+	static const uint32				s_maxSubmitIndex = 3;
+
+
 	HWND							_hWnd;
 
 	VkInstance						_instance;
@@ -132,9 +136,7 @@ private:
 	uint32							_frameBufferWidth;
 	uint32							_frameBufferHeight;
 
-	ImGui_ImplVulkanH_Window		_imguiWindow;
-
-	static const uint32				s_maxSubmitIndex = 3;
+	bool							_isBeginCalled[s_maxSubmitIndex];
 };
 
 }

@@ -48,6 +48,7 @@ GraphicsAPI::GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferH
 	, _submitIndex{ 0 }
 	, _frameBufferWidth{ frameBufferWidth }
 	, _frameBufferHeight{ frameBufferHeight }
+	, _isBeginCalled{ false, false, false }
 {
 
 }
@@ -60,9 +61,6 @@ GraphicsAPI::~GraphicsAPI()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	ImGui_ImplVulkanH_DestroyWindow(_instance, _device, &_imguiWindow, nullptr);
-
-	//TODO: Destroy Vulkan Handles...
 	Release();
 }
 
@@ -194,6 +192,8 @@ void GraphicsAPI::initImGui()
 
 void GraphicsAPI::Draw()
 {
+	if (!_isBeginCalled[_imageIndex]) return;
+	
 	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
@@ -235,11 +235,13 @@ void GraphicsAPI::Release()
 
 void GraphicsAPI::RenderImGui()
 {
+	if (!_isBeginCalled[_imageIndex]) return;
+
 	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 
 	ImDrawData* mainDrawData = ImGui::GetDrawData();
 
-	ImGui_ImplVulkan_RenderDrawData(mainDrawData, _commandBuffers[_submitIndex]);
+	ImGui_ImplVulkan_RenderDrawData(mainDrawData, _commandBuffers[_imageIndex]);
 
 	endRenderPass(_commandBuffers[_imageIndex]);
 }
@@ -251,7 +253,12 @@ void GraphicsAPI::Begin()
 
 	VkResult result = vkAcquireNextImageKHR(_device, _swapChain, UINT64_MAX, _imageAvailableSemaphores[_submitIndex], VK_NULL_HANDLE, &_imageIndex);
 
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		recreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		GG_CRITICAL("Failed to acquire swap chain image!");
 	}
@@ -267,22 +274,25 @@ void GraphicsAPI::Begin()
 	vkResetCommandBuffer(_commandBuffers[_imageIndex], 0);
 
 	beginCommandBuffer(_commandBuffers[_imageIndex]);
+
+	_isBeginCalled[_imageIndex] = true;
 }
 
 void GraphicsAPI::End()
 {
+	if (!_isBeginCalled[_imageIndex]) return;
 	endCommandBuffer(_commandBuffers[_imageIndex]);
 
 	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &_imageAvailableSemaphores[_imageIndex];
+	submitInfo.pWaitSemaphores = &_imageAvailableSemaphores[_submitIndex];
 	submitInfo.pWaitDstStageMask = &waitStage;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &_commandBuffers[_imageIndex];
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &_renderFinishedSemaphores[_imageIndex];
+	submitInfo.pSignalSemaphores = &_renderFinishedSemaphores[_submitIndex];
 
 	vkResetFences(_device, 1, &_inFlightFences[_imageIndex]);
 
@@ -298,19 +308,22 @@ void GraphicsAPI::End()
 	presentInfo.pWaitSemaphores = &renderCompleteSemaphore;
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = &_swapChain;
-	presentInfo.pImageIndices = &_submitIndex;
+	presentInfo.pImageIndices = &_imageIndex;
 	VkResult result = vkQueuePresentKHR(_presentQueue, &presentInfo);
+
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
 		// rebuild swapchain.
-		return;
+		recreateSwapChain();
 	}
-	if (result != VK_SUCCESS)
+	else if (result != VK_SUCCESS)
 	{
 		GG_CRITICAL("Fail to present graphics queue!");
 	}
 
 	_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
+
+	_isBeginCalled[_imageIndex] = false;
 }
 
 void GraphicsAPI::createInstance()
@@ -841,10 +854,11 @@ void GraphicsAPI::createCommandBuffers()
 
 void GraphicsAPI::createSyncObjects()
 {
-	_imageAvailableSemaphores.resize(s_maxSubmitIndex);
-	_renderFinishedSemaphores.resize(s_maxSubmitIndex);
 	_inFlightFences.resize(s_maxSubmitIndex);
 	_imagesInFlight.resize(_swapChainImages.size(), VK_NULL_HANDLE);
+
+	_imageAvailableSemaphores.resize(s_maxSubmitIndex);
+	_renderFinishedSemaphores.resize(s_maxSubmitIndex);
 
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -891,6 +905,20 @@ void GraphicsAPI::createDescriptorPool()
 	{
 		GG_CRITICAL("Fail to create Descriptor pool!");
 	}
+}
+
+void GraphicsAPI::recreateSwapChain()
+{
+	WaitDeviceIdle();
+
+	cleanupSwapChain();
+
+	createSwapChain();
+	createImageViews();
+	createRenderPass();
+	createGraphicsPipeline();
+	createFrameBuffers();
+	createCommandBuffers();
 }
 
 void GraphicsAPI::cleanupSwapChain()
@@ -1114,11 +1142,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
-	{
-		GG_INFO("Validation Layer : {0}", pCallbackData->pMessage);
-	}
-	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+
+	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
 		GG_WARNING("Validation Layer : {0}", pCallbackData->pMessage);
 	}
@@ -1129,6 +1154,10 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
 		GG_CRITICAL("vaildation layer : {0}", pCallbackData->pMessage);
+	}
+	else
+	{
+		GG_INFO("Validation Layer : {0}", pCallbackData->pMessage);
 	}
 	return VK_FALSE;
 }

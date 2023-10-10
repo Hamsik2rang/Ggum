@@ -99,6 +99,13 @@ void Application::Run()
 
 void Application::OnEvent(Event& e)
 {
+	if (e.GetEventType() == eEventType::WindowResized)
+	{
+		WindowResizeEvent* resizeEvent = static_cast<WindowResizeEvent*>(&e);
+		_renderer->OnResize(resizeEvent->GetWidth(), resizeEvent->GetHeight());
+		return;
+	}
+
 	for (const auto& renderPass : _renderPath)
 	{
 		renderPass->OnEvent(e);
