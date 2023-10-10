@@ -30,6 +30,8 @@ public:
 	void Begin();
 	void End();
 
+	inline void SetMinimized(bool isMinimized) { _isMinimized = isMinimized; }
+
 private:
 
 	struct QueueFamilyIndices
@@ -137,6 +139,7 @@ private:
 	uint32							_frameBufferHeight;
 
 	bool							_isBeginCalled[s_maxSubmitIndex];
+	bool							_isMinimized;
 };
 
 }

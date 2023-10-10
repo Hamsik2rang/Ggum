@@ -49,6 +49,7 @@ GraphicsAPI::GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferH
 	, _frameBufferWidth{ frameBufferWidth }
 	, _frameBufferHeight{ frameBufferHeight }
 	, _isBeginCalled{ false, false, false }
+	, _isMinimized{ false }
 {
 
 }
@@ -193,7 +194,8 @@ void GraphicsAPI::initImGui()
 void GraphicsAPI::Draw()
 {
 	if (!_isBeginCalled[_imageIndex]) return;
-	
+	if (_isMinimized) return;
+
 	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
@@ -249,6 +251,7 @@ void GraphicsAPI::RenderImGui()
 
 void GraphicsAPI::Begin()
 {
+	if (_isMinimized) return;
 	vkWaitForFences(_device, 1, &_inFlightFences[_submitIndex], VK_TRUE, UINT64_MAX);
 
 	VkResult result = vkAcquireNextImageKHR(_device, _swapChain, UINT64_MAX, _imageAvailableSemaphores[_submitIndex], VK_NULL_HANDLE, &_imageIndex);
@@ -281,6 +284,8 @@ void GraphicsAPI::Begin()
 void GraphicsAPI::End()
 {
 	if (!_isBeginCalled[_imageIndex]) return;
+	if (_isMinimized) return;
+
 	endCommandBuffer(_commandBuffers[_imageIndex]);
 
 	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

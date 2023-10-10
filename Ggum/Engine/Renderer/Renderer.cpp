@@ -60,7 +60,14 @@ void Renderer::PresentGUI()
 
 void Renderer::OnResize(uint32 width, uint32 height)
 {
-
+	if (width == 0 || height == 0)
+	{
+		_api->SetMinimized(true);
+	}
+	else
+	{
+		_api->SetMinimized(false);
+	}
 }
 
 }
