@@ -53,6 +53,7 @@ GraphicsAPI::GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferH
 	, _textureBuffer{ nullptr }
 	, _textureWidth{ 0 }
 	, _textureHeight{ 0 }
+	, _needUpdateTexture{ false }
 {
 
 }
@@ -201,8 +202,18 @@ void GraphicsAPI::initImGui()
 
 void GraphicsAPI::Draw()
 {
-	if (!_isBeginCalled[_imageIndex]) return;
-	if (_isMinimized) return;
+	if (!_isBeginCalled[_imageIndex]) 
+	{
+		return;
+	}
+	if (_isMinimized) 
+	{
+		return;
+	}
+	if (_needUpdateTexture) 
+	{
+		updateTextureImage();
+	}
 
 	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
@@ -358,6 +369,9 @@ void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8* color)
 	{
 		_textureBuffer[index + i] = color[i];
 	}
+
+	// TODO: Need set dirty system!
+	_needUpdateTexture = true;
 }
 
 void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, uint8 a)
@@ -1048,7 +1062,26 @@ void GraphicsAPI::createTextureSampler()
 
 void GraphicsAPI::updateTextureImage()
 {
+	// TODO: Update Texture
+	VkDeviceSize size = _textureWidth * _textureHeight * _textureChannel;
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
 
+	createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
+	::memcpy(data, _textureBuffer, static_cast<size_t>(size));
+	vkUnmapMemory(_device, stagingBufferMemory);
+
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	copyBufferToImage(stagingBuffer, _textureImage, _textureWidth, _textureHeight);
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(_device, stagingBuffer, nullptr);
+	vkFreeMemory(_device, stagingBufferMemory, nullptr);
+
+	_needUpdateTexture = false;
 }
 
 void GraphicsAPI::createTextureImageView()

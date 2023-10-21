@@ -173,6 +173,7 @@ private:
 
 	bool							_isBeginCalled[s_maxSubmitIndex];
 	bool							_isMinimized;
+	bool							_needUpdateTexture;
 };
 
 }
