@@ -23,5 +23,5 @@ public:
 	virtual void OnGUI();
 
 private:
-	GG::Timer _timer;
+	uint8 _color[4];
 };

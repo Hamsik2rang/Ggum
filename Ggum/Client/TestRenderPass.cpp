@@ -9,7 +9,7 @@ TestRenderPass::TestRenderPass(std::string passName, GG::RenderPassOrder order)
 
 void TestRenderPass::OnAttach()
 {
-	_timer.Start();
+
 }
 
 void TestRenderPass::OnDetach()
@@ -29,16 +29,11 @@ void TestRenderPass::OnEvent(GG::Event& e)
 
 void TestRenderPass::OnRender()
 {
-	static uint8 t0 = 0, t1 = 0, t2 = 0;
-	t0 += 2;
-	t1 += 3;
-	t2 += 5;
 	for (int i = 0; i < 720; i++)
 	{
 		for (int j = 0; j < 1280; j++)
 		{
-			uint8 color[4]{ t0, t1, t2, 255 };
-			_renderer->SetPixelForDebug(i, j, color);
+			_renderer->SetPixelForDebug(i, j, _color);
 		}
 	}
 }
@@ -58,17 +53,13 @@ void TestRenderPass::OnGUI()
 	ImGui::Begin(_name.c_str());                          // Create a window called "Hello, world!" and append into it.
 
 	ImGui::Text("This is %s Panel", _name.c_str());                   // Display some text (you can use a format strings too)
-	ImGui::Checkbox("Demo Window", &showDemoWindow);        // Edit bools storing our window open/close state
 
-	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 	ImGui::ColorEdit3("clear color", (float*)&clearColor);  // Edit 3 floats representing a color
+	_color[0] = clearColor.x * 255;
+	_color[1] = clearColor.y * 255;
+	_color[2] = clearColor.z * 255;
+	_color[3] = clearColor.w * 255;
 
-	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-	{
-		counter++;
-	}
-	ImGui::SameLine();
-	ImGui::Text("counter = %d", counter);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();
