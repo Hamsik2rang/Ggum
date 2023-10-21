@@ -351,6 +351,21 @@ void GraphicsAPI::End()
 	_isBeginCalled[_imageIndex] = false;
 }
 
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8* color)
+{
+	uint32 index = (_textureWidth * row + col) * _textureChannel;
+	for (uint32 i = 0; i < 4; i++)
+	{
+		_textureBuffer[index + i] = color[i];
+	}
+}
+
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, uint8 a)
+{
+	uint8 color[]{ r, g, b, a };
+	SetPixel(row, col, color);
+}
+
 void GraphicsAPI::createInstance()
 {
 	GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
@@ -1631,6 +1646,13 @@ void GraphicsAPI::createTextureBuffer(uint32 width, uint32 height)
 	}
 
 	_textureBuffer = new uint8[width * height * _textureChannel]{ 0 };
+	for (int i = 0; i < 25; i++)
+	{
+		for (int j = 0; j < 25; j++)
+		{
+			SetPixel(i, j, 255, 0, 0, 255);
+		}
+	}
 }
 
 VkShaderModule GraphicsAPI::createShaderModule(uint32* spvCode, size_t size)

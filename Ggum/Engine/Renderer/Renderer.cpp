@@ -70,4 +70,9 @@ void Renderer::OnResize(uint32 width, uint32 height)
 	}
 }
 
+void Renderer::SetPixelForDebug(uint32 row, uint32 col, uint8* color)
+{
+	_api->SetPixel(row, col, color);
+}
+
 }

@@ -21,6 +21,8 @@ public:
 
 	virtual void OnResize(uint32 width, uint32 height) = 0;
 
+	virtual void SetPixelForDebug(uint32 row, uint32 col, uint8* color) = 0;
+
 protected:
 	std::shared_ptr<GraphicsAPI> _api = nullptr;
 	//... 

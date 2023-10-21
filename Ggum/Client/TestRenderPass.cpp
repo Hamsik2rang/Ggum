@@ -29,7 +29,14 @@ void TestRenderPass::OnEvent(GG::Event& e)
 
 void TestRenderPass::OnRender()
 {
-
+	uint8 color[]{ 255, 0, 255, 255 };
+	for (int i = 0; i < 100; i++)
+	{
+		for (int j = 0; j < 100; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
 }
 
 void TestRenderPass::OnGUI()
