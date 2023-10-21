@@ -21,4 +21,7 @@ public:
 	virtual void OnRender();
 	// Application의 GUI Render Loop마다 호출됩니다
 	virtual void OnGUI();
+
+private:
+	GG::Timer _timer;
 };

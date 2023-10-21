@@ -9,7 +9,7 @@ TestRenderPass::TestRenderPass(std::string passName, GG::RenderPassOrder order)
 
 void TestRenderPass::OnAttach()
 {
-
+	_timer.Start();
 }
 
 void TestRenderPass::OnDetach()
@@ -33,12 +33,11 @@ void TestRenderPass::OnRender()
 	t0 += 2;
 	t1 += 3;
 	t2 += 5;
-	uint8 color[]{ t0, t1, t2, 255 };
-	for (int i = 0; i < 500; i++)
+	for (int i = 0; i < 720; i++)
 	{
-		for (int j = 0; j < 500; j++)
+		for (int j = 0; j < 1280; j++)
 		{
-		
+			uint8 color[4]{ t0, t1, t2, 255 };
 			_renderer->SetPixelForDebug(i, j, color);
 		}
 	}
