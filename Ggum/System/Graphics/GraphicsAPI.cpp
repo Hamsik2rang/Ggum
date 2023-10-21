@@ -51,8 +51,6 @@ GraphicsAPI::GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferH
 	, _isBeginCalled{ false, false, false }
 	, _isMinimized{ false }
 	, _textureBuffer{ nullptr }
-	, _textureWidth{ 0 }
-	, _textureHeight{ 0 }
 	, _needUpdateTexture{ false }
 {
 
@@ -1647,10 +1645,8 @@ VkExtent2D GraphicsAPI::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabil
 		extent = actualExtent;
 	}
 
-	if (!_textureBuffer || _textureWidth != extent.width || _textureHeight != extent.height)
+	if (!_textureBuffer)
 	{
-		_textureWidth = extent.width;
-		_textureHeight = extent.height;
 		createTextureBuffer(_textureWidth, _textureHeight);
 	}
 
@@ -1679,13 +1675,6 @@ void GraphicsAPI::createTextureBuffer(uint32 width, uint32 height)
 	}
 
 	_textureBuffer = new uint8[width * height * _textureChannel]{ 0 };
-	for (int i = 0; i < 25; i++)
-	{
-		for (int j = 0; j < 25; j++)
-		{
-			SetPixel(i, j, 255, 0, 0, 255);
-		}
-	}
 }
 
 VkShaderModule GraphicsAPI::createShaderModule(uint32* spvCode, size_t size)

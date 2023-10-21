@@ -25,7 +25,7 @@ public:
 	static Application* Get();
 
 protected:
-	Application(const char* title = "GG Engine", uint32 width = 1600, uint32 height = 1050);
+	Application(const char* title = "GG Engine", uint32 width = 1600, uint32 height = 900);
 
 private:
 	static Application* s_instance;

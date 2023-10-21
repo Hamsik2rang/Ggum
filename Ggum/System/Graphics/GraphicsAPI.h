@@ -167,8 +167,8 @@ private:
 	VkSampler						_textureSampler;
 
 	uint8*							_textureBuffer;
-	uint32							_textureWidth;
-	uint32							_textureHeight;
+	const uint32					_textureWidth = 1280;
+	const uint32					_textureHeight = 720;
 	const uint32					_textureChannel = 4;
 
 	bool							_isBeginCalled[s_maxSubmitIndex];
