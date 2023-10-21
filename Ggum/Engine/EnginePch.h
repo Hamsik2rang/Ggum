@@ -40,6 +40,9 @@
 #include <set>
 #include <unordered_set>
 
+#include <thread>
+#include <mutex>
+#include <semaphore>
 
 #ifdef GG_GRAPHICS_API_VULKAN
 #pragma comment(lib, "vulkan-1.lib")
