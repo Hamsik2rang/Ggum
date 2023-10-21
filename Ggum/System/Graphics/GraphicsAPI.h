@@ -30,6 +30,9 @@ public:
 	void Begin();
 	void End();
 
+	void SetPixel(uint32 row, uint32 col, uint8* color);
+	void SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, uint8 a);
+
 	inline void SetMinimized(bool isMinimized) { _isMinimized = isMinimized; }
 
 private:
@@ -61,13 +64,23 @@ private:
 	void createLogicalDevice();
 	void createSwapChain();
 	void createImageViews();
+	VkImageView createImageView(VkImage image, VkFormat format);
 	void createRenderPass();
 	void createGraphicsPipeline();
 	void createFrameBuffers();
 	void createCommandPool();
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	uint32 findMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties);
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void createTextureImage();
+	void createTextureSampler();
+	void updateTextureImage();
+	void createTextureImageView();
 	void createCommandBuffers();
 	void createSyncObjects();
 	void createDescriptorPool();
+	void createDescriptorSetLayout();
+	void createDescriptorSets();
 
 	void recreateSwapChain();
 	void cleanupSwapChain();
@@ -77,6 +90,7 @@ private:
 	void beginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer framebuffer);
 	void endRenderPass(VkCommandBuffer commandBuffer);
 	void bindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
+	void bindDescriptorSets(VkCommandBuffer commandBuffer);
 	void setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height);
 	void setScissor(VkCommandBuffer commandBuffer, int x = 0, int y = 0);
 	void draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
@@ -92,6 +106,11 @@ private:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
+	void createTextureBuffer(uint32 width, uint32 height);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32 width, uint32 height);
+	VkCommandBuffer beginSingleTimeCommands();
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	VkShaderModule createShaderModule(uint32* spvCode, size_t size);
 
 	VkResult createDebugUtilsMessengerEXT(VkInstance instance,
@@ -138,8 +157,23 @@ private:
 	uint32							_frameBufferWidth;
 	uint32							_frameBufferHeight;
 
+	VkDescriptorSetLayout			_descriptorSetLayout;
+	std::vector<VkDescriptorSet>	_descriptorSets;
+
+
+	VkImage							_textureImage;
+	VkDeviceMemory					_textureImageMemory;
+	VkImageView						_textureImageView;
+	VkSampler						_textureSampler;
+
+	uint8*							_textureBuffer;
+	const uint32					_textureWidth = 1280;
+	const uint32					_textureHeight = 720;
+	const uint32					_textureChannel = 4;
+
 	bool							_isBeginCalled[s_maxSubmitIndex];
 	bool							_isMinimized;
+	bool							_needUpdateTexture;
 };
 
 }

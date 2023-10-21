@@ -50,6 +50,8 @@ GraphicsAPI::GraphicsAPI(HWND hWnd, uint32 frameBufferWidth, uint32 frameBufferH
 	, _frameBufferHeight{ frameBufferHeight }
 	, _isBeginCalled{ false, false, false }
 	, _isMinimized{ false }
+	, _textureBuffer{ nullptr }
+	, _needUpdateTexture{ false }
 {
 
 }
@@ -72,7 +74,7 @@ void GraphicsAPI::Init()
 	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
-	createDescriptorPool();
+	createDescriptorSetLayout();
 	createSwapChain();
 	createImageViews();
 	createRenderPass();
@@ -80,6 +82,11 @@ void GraphicsAPI::Init()
 	createFrameBuffers();
 	createCommandPool();
 	createCommandBuffers();
+	createTextureImage();
+	createTextureImageView();
+	createTextureSampler();
+	createDescriptorPool();
+	createDescriptorSets();
 	createSyncObjects();
 
 	initImGui();
@@ -193,12 +200,22 @@ void GraphicsAPI::initImGui()
 
 void GraphicsAPI::Draw()
 {
-	if (!_isBeginCalled[_imageIndex]) return;
-	if (_isMinimized) return;
+	if (!_isBeginCalled[_imageIndex]) 
+	{
+		return;
+	}
+	if (_isMinimized) 
+	{
+		return;
+	}
+	if (_needUpdateTexture) 
+	{
+		updateTextureImage();
+	}
 
 	beginRenderPass(_commandBuffers[_imageIndex], _swapChainFramebuffers[_imageIndex]);
 	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
-	bindPipeline(_commandBuffers[_imageIndex], _pipeline);
+	bindDescriptorSets(_commandBuffers[_imageIndex]);
 	setViewport(_commandBuffers[_imageIndex], 0.0f, 0.0f, static_cast<float>(_swapChainExtent.width), static_cast<float>(_swapChainExtent.height));
 	setScissor(_commandBuffers[_imageIndex], 0, 0);
 	draw(_commandBuffers[_imageIndex], 6, 1, 0, 0);
@@ -214,6 +231,16 @@ void GraphicsAPI::Release()
 {
 	cleanupSwapChain();
 
+	vkDestroySampler(_device, _textureSampler, nullptr);
+	vkDestroyImageView(_device, _textureImageView, nullptr);
+	vkDestroyImage(_device, _textureImage, nullptr);
+	vkFreeMemory(_device, _textureImageMemory, nullptr);
+	if (_textureBuffer)
+	{
+		delete[] _textureBuffer;
+		_textureBuffer = nullptr;
+	}
+
 	for (size_t i = 0; i < s_maxSubmitIndex; i++)
 	{
 		vkDestroySemaphore(_device, _renderFinishedSemaphores[i], nullptr);
@@ -224,6 +251,8 @@ void GraphicsAPI::Release()
 	vkDestroyCommandPool(_device, _commandPool, nullptr);
 
 	vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
+
+	vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
 
 	vkDestroyDevice(_device, nullptr);
 
@@ -331,6 +360,24 @@ void GraphicsAPI::End()
 	_isBeginCalled[_imageIndex] = false;
 }
 
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8* color)
+{
+	uint32 index = (_textureWidth * row + col) * _textureChannel;
+	for (uint32 i = 0; i < 4; i++)
+	{
+		_textureBuffer[index + i] = color[i];
+	}
+
+	// TODO: Need set dirty system!
+	_needUpdateTexture = true;
+}
+
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, uint8 a)
+{
+	uint8 color[]{ r, g, b, a };
+	SetPixel(row, col, color);
+}
+
 void GraphicsAPI::createInstance()
 {
 	GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
@@ -435,6 +482,7 @@ void GraphicsAPI::createLogicalDevice()
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -520,28 +568,30 @@ void GraphicsAPI::createImageViews()
 	_swapChainImageViews.resize(_swapChainImages.size());
 	for (size_t i = 0, size = _swapChainImageViews.size(); i < size; i++)
 	{
-		VkImageViewCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = _swapChainImages[i];
-		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = _swapChainImageFormat;
-
-		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		createInfo.subresourceRange.baseMipLevel = 0;
-		createInfo.subresourceRange.levelCount = 1;
-		createInfo.subresourceRange.baseArrayLayer = 0;
-		createInfo.subresourceRange.layerCount = 1;
-
-		if (vkCreateImageView(_device, &createInfo, nullptr, &_swapChainImageViews[i]) != VK_SUCCESS)
-		{
-			GG_CRITICAL("Failed to create image view!");
-		}
+		_swapChainImageViews[i] = createImageView(_swapChainImages[i], _swapChainImageFormat);
 	}
+}
+
+VkImageView GraphicsAPI::createImageView(VkImage image, VkFormat format)
+{
+	VkImageViewCreateInfo viewInfo = {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView imageView;
+	if (vkCreateImageView(_device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create texture image view!");
+	}
+
+	return imageView;
 }
 
 void GraphicsAPI::createRenderPass()
@@ -592,61 +642,76 @@ void GraphicsAPI::createGraphicsPipeline()
 {
 	uint32 vs[]
 	{
-		0x03022307, 0x00000100, 0x0B000D00, 0x28000000, 0x00000000, 0x11000200, 0x01000000, 0x0B000600,
+		0x03022307, 0x00000100, 0x0B000D00, 0x32000000, 0x00000000, 0x11000200, 0x01000000, 0x0B000600,
 		0x01000000, 0x474C534C, 0x2E737464, 0x2E343530, 0x00000000, 0x0E000300, 0x00000000, 0x01000000,
-		0x0F000700, 0x00000000, 0x04000000, 0x6D61696E, 0x00000000, 0x19000000, 0x1D000000, 0x03000300,
-		0x02000000, 0xC2010000, 0x04000A00, 0x474C5F47, 0x4F4F474C, 0x455F6370, 0x705F7374, 0x796C655F,
-		0x6C696E65, 0x5F646972, 0x65637469, 0x76650000, 0x04000800, 0x474C5F47, 0x4F4F474C, 0x455F696E,
-		0x636C7564, 0x655F6469, 0x72656374, 0x69766500, 0x05000400, 0x04000000, 0x6D61696E, 0x00000000,
-		0x05000500, 0x0C000000, 0x706F7369, 0x74696F6E, 0x73000000, 0x05000600, 0x17000000, 0x676C5F50,
-		0x65725665, 0x72746578, 0x00000000, 0x06000600, 0x17000000, 0x00000000, 0x676C5F50, 0x6F736974,
-		0x696F6E00, 0x06000700, 0x17000000, 0x01000000, 0x676C5F50, 0x6F696E74, 0x53697A65, 0x00000000,
-		0x06000700, 0x17000000, 0x02000000, 0x676C5F43, 0x6C697044, 0x69737461, 0x6E636500, 0x06000700,
-		0x17000000, 0x03000000, 0x676C5F43, 0x756C6C44, 0x69737461, 0x6E636500, 0x05000300, 0x19000000,
-		0x00000000, 0x05000600, 0x1D000000, 0x676C5F56, 0x65727465, 0x78496E64, 0x65780000, 0x48000500,
-		0x17000000, 0x00000000, 0x0B000000, 0x00000000, 0x48000500, 0x17000000, 0x01000000, 0x0B000000,
-		0x01000000, 0x48000500, 0x17000000, 0x02000000, 0x0B000000, 0x03000000, 0x48000500, 0x17000000,
-		0x03000000, 0x0B000000, 0x04000000, 0x47000300, 0x17000000, 0x02000000, 0x47000400, 0x1D000000,
-		0x0B000000, 0x2A000000, 0x13000200, 0x02000000, 0x21000300, 0x03000000, 0x02000000, 0x16000300,
-		0x06000000, 0x20000000, 0x17000400, 0x07000000, 0x06000000, 0x02000000, 0x15000400, 0x08000000,
-		0x20000000, 0x00000000, 0x2B000400, 0x08000000, 0x09000000, 0x06000000, 0x1C000400, 0x0A000000,
-		0x07000000, 0x09000000, 0x20000400, 0x0B000000, 0x06000000, 0x0A000000, 0x3B000400, 0x0B000000,
-		0x0C000000, 0x06000000, 0x2B000400, 0x06000000, 0x0D000000, 0x0000803F, 0x2C000500, 0x07000000,
-		0x0E000000, 0x0D000000, 0x0D000000, 0x2B000400, 0x06000000, 0x0F000000, 0x000080BF, 0x2C000500,
-		0x07000000, 0x10000000, 0x0F000000, 0x0F000000, 0x2C000500, 0x07000000, 0x11000000, 0x0D000000,
-		0x0F000000, 0x2C000500, 0x07000000, 0x12000000, 0x0F000000, 0x0D000000, 0x2C000900, 0x0A000000,
-		0x13000000, 0x0E000000, 0x10000000, 0x11000000, 0x0E000000, 0x12000000, 0x10000000, 0x17000400,
-		0x14000000, 0x06000000, 0x04000000, 0x2B000400, 0x08000000, 0x15000000, 0x01000000, 0x1C000400,
-		0x16000000, 0x06000000, 0x15000000, 0x1E000600, 0x17000000, 0x14000000, 0x06000000, 0x16000000,
-		0x16000000, 0x20000400, 0x18000000, 0x03000000, 0x17000000, 0x3B000400, 0x18000000, 0x19000000,
-		0x03000000, 0x15000400, 0x1A000000, 0x20000000, 0x01000000, 0x2B000400, 0x1A000000, 0x1B000000,
-		0x00000000, 0x20000400, 0x1C000000, 0x01000000, 0x1A000000, 0x3B000400, 0x1C000000, 0x1D000000,
-		0x01000000, 0x20000400, 0x1F000000, 0x06000000, 0x07000000, 0x2B000400, 0x06000000, 0x22000000,
-		0x00000000, 0x20000400, 0x26000000, 0x03000000, 0x14000000, 0x36000500, 0x02000000, 0x04000000,
-		0x00000000, 0x03000000, 0xF8000200, 0x05000000, 0x3E000300, 0x0C000000, 0x13000000, 0x3D000400,
-		0x1A000000, 0x1E000000, 0x1D000000, 0x41000500, 0x1F000000, 0x20000000, 0x0C000000, 0x1E000000,
-		0x3D000400, 0x07000000, 0x21000000, 0x20000000, 0x51000500, 0x06000000, 0x23000000, 0x21000000,
-		0x00000000, 0x51000500, 0x06000000, 0x24000000, 0x21000000, 0x01000000, 0x50000700, 0x14000000,
-		0x25000000, 0x23000000, 0x24000000, 0x22000000, 0x0D000000, 0x41000500, 0x26000000, 0x27000000,
-		0x19000000, 0x1B000000, 0x3E000300, 0x27000000, 0x25000000, 0xFD000100, 0x38000100
+		0x0F000800, 0x00000000, 0x04000000, 0x6D61696E, 0x00000000, 0x1F000000, 0x23000000, 0x2E000000,
+		0x03000300, 0x02000000, 0xC2010000, 0x04000A00, 0x474C5F47, 0x4F4F474C, 0x455F6370, 0x705F7374,
+		0x796C655F, 0x6C696E65, 0x5F646972, 0x65637469, 0x76650000, 0x04000800, 0x474C5F47, 0x4F4F474C,
+		0x455F696E, 0x636C7564, 0x655F6469, 0x72656374, 0x69766500, 0x05000400, 0x04000000, 0x6D61696E,
+		0x00000000, 0x05000500, 0x0C000000, 0x706F7369, 0x74696F6E, 0x73000000, 0x05000300, 0x14000000,
+		0x75760000, 0x05000600, 0x1D000000, 0x676C5F50, 0x65725665, 0x72746578, 0x00000000, 0x06000600,
+		0x1D000000, 0x00000000, 0x676C5F50, 0x6F736974, 0x696F6E00, 0x06000700, 0x1D000000, 0x01000000,
+		0x676C5F50, 0x6F696E74, 0x53697A65, 0x00000000, 0x06000700, 0x1D000000, 0x02000000, 0x676C5F43,
+		0x6C697044, 0x69737461, 0x6E636500, 0x06000700, 0x1D000000, 0x03000000, 0x676C5F43, 0x756C6C44,
+		0x69737461, 0x6E636500, 0x05000300, 0x1F000000, 0x00000000, 0x05000600, 0x23000000, 0x676C5F56,
+		0x65727465, 0x78496E64, 0x65780000, 0x05000400, 0x2E000000, 0x6F757455, 0x56000000, 0x48000500,
+		0x1D000000, 0x00000000, 0x0B000000, 0x00000000, 0x48000500, 0x1D000000, 0x01000000, 0x0B000000,
+		0x01000000, 0x48000500, 0x1D000000, 0x02000000, 0x0B000000, 0x03000000, 0x48000500, 0x1D000000,
+		0x03000000, 0x0B000000, 0x04000000, 0x47000300, 0x1D000000, 0x02000000, 0x47000400, 0x23000000,
+		0x0B000000, 0x2A000000, 0x47000400, 0x2E000000, 0x1E000000, 0x00000000, 0x13000200, 0x02000000,
+		0x21000300, 0x03000000, 0x02000000, 0x16000300, 0x06000000, 0x20000000, 0x17000400, 0x07000000,
+		0x06000000, 0x02000000, 0x15000400, 0x08000000, 0x20000000, 0x00000000, 0x2B000400, 0x08000000,
+		0x09000000, 0x06000000, 0x1C000400, 0x0A000000, 0x07000000, 0x09000000, 0x20000400, 0x0B000000,
+		0x06000000, 0x0A000000, 0x3B000400, 0x0B000000, 0x0C000000, 0x06000000, 0x2B000400, 0x06000000,
+		0x0D000000, 0x0000803F, 0x2C000500, 0x07000000, 0x0E000000, 0x0D000000, 0x0D000000, 0x2B000400,
+		0x06000000, 0x0F000000, 0x000080BF, 0x2C000500, 0x07000000, 0x10000000, 0x0F000000, 0x0F000000,
+		0x2C000500, 0x07000000, 0x11000000, 0x0D000000, 0x0F000000, 0x2C000500, 0x07000000, 0x12000000,
+		0x0F000000, 0x0D000000, 0x2C000900, 0x0A000000, 0x13000000, 0x0E000000, 0x10000000, 0x11000000,
+		0x0E000000, 0x12000000, 0x10000000, 0x3B000400, 0x0B000000, 0x14000000, 0x06000000, 0x2B000400,
+		0x06000000, 0x15000000, 0x00000000, 0x2C000500, 0x07000000, 0x16000000, 0x15000000, 0x15000000,
+		0x2C000500, 0x07000000, 0x17000000, 0x0D000000, 0x15000000, 0x2C000500, 0x07000000, 0x18000000,
+		0x15000000, 0x0D000000, 0x2C000900, 0x0A000000, 0x19000000, 0x0E000000, 0x16000000, 0x17000000,
+		0x0E000000, 0x18000000, 0x16000000, 0x17000400, 0x1A000000, 0x06000000, 0x04000000, 0x2B000400,
+		0x08000000, 0x1B000000, 0x01000000, 0x1C000400, 0x1C000000, 0x06000000, 0x1B000000, 0x1E000600,
+		0x1D000000, 0x1A000000, 0x06000000, 0x1C000000, 0x1C000000, 0x20000400, 0x1E000000, 0x03000000,
+		0x1D000000, 0x3B000400, 0x1E000000, 0x1F000000, 0x03000000, 0x15000400, 0x20000000, 0x20000000,
+		0x01000000, 0x2B000400, 0x20000000, 0x21000000, 0x00000000, 0x20000400, 0x22000000, 0x01000000,
+		0x20000000, 0x3B000400, 0x22000000, 0x23000000, 0x01000000, 0x20000400, 0x25000000, 0x06000000,
+		0x07000000, 0x20000400, 0x2B000000, 0x03000000, 0x1A000000, 0x20000400, 0x2D000000, 0x03000000,
+		0x07000000, 0x3B000400, 0x2D000000, 0x2E000000, 0x03000000, 0x36000500, 0x02000000, 0x04000000,
+		0x00000000, 0x03000000, 0xF8000200, 0x05000000, 0x3E000300, 0x0C000000, 0x13000000, 0x3E000300,
+		0x14000000, 0x19000000, 0x3D000400, 0x20000000, 0x24000000, 0x23000000, 0x41000500, 0x25000000,
+		0x26000000, 0x0C000000, 0x24000000, 0x3D000400, 0x07000000, 0x27000000, 0x26000000, 0x51000500,
+		0x06000000, 0x28000000, 0x27000000, 0x00000000, 0x51000500, 0x06000000, 0x29000000, 0x27000000,
+		0x01000000, 0x50000700, 0x1A000000, 0x2A000000, 0x28000000, 0x29000000, 0x15000000, 0x0D000000,
+		0x41000500, 0x2B000000, 0x2C000000, 0x1F000000, 0x21000000, 0x3E000300, 0x2C000000, 0x2A000000,
+		0x3D000400, 0x20000000, 0x2F000000, 0x23000000, 0x41000500, 0x25000000, 0x30000000, 0x14000000,
+		0x2F000000, 0x3D000400, 0x07000000, 0x31000000, 0x30000000, 0x3E000300, 0x2E000000, 0x31000000,
+		0xFD000100, 0x38000100
 	};
 
 	uint32 fs[]
 	{
-		0x03022307, 0x00000100, 0x0B000D00, 0x0D000000, 0x00000000, 0x11000200, 0x01000000, 0x0B000600,
+		0x03022307, 0x00000100, 0x0B000D00, 0x14000000, 0x00000000, 0x11000200, 0x01000000, 0x0B000600,
 		0x01000000, 0x474C534C, 0x2E737464, 0x2E343530, 0x00000000, 0x0E000300, 0x00000000, 0x01000000,
-		0x0F000600, 0x04000000, 0x04000000, 0x6D61696E, 0x00000000, 0x09000000, 0x10000300, 0x04000000,
-		0x07000000, 0x03000300, 0x02000000, 0xC2010000, 0x04000A00, 0x474C5F47, 0x4F4F474C, 0x455F6370,
-		0x705F7374, 0x796C655F, 0x6C696E65, 0x5F646972, 0x65637469, 0x76650000, 0x04000800, 0x474C5F47,
-		0x4F4F474C, 0x455F696E, 0x636C7564, 0x655F6469, 0x72656374, 0x69766500, 0x05000400, 0x04000000,
-		0x6D61696E, 0x00000000, 0x05000400, 0x09000000, 0x636F6C6F, 0x72000000, 0x47000400, 0x09000000,
-		0x1E000000, 0x00000000, 0x13000200, 0x02000000, 0x21000300, 0x03000000, 0x02000000, 0x16000300,
-		0x06000000, 0x20000000, 0x17000400, 0x07000000, 0x06000000, 0x04000000, 0x20000400, 0x08000000,
-		0x03000000, 0x07000000, 0x3B000400, 0x08000000, 0x09000000, 0x03000000, 0x2B000400, 0x06000000,
-		0x0A000000, 0x0000003F, 0x2B000400, 0x06000000, 0x0B000000, 0x0000803F, 0x2C000700, 0x07000000,
-		0x0C000000, 0x0A000000, 0x0A000000, 0x0A000000, 0x0B000000, 0x36000500, 0x02000000, 0x04000000,
-		0x00000000, 0x03000000, 0xF8000200, 0x05000000, 0x3E000300, 0x09000000, 0x0C000000, 0xFD000100,
-		0x38000100
+		0x0F000700, 0x04000000, 0x04000000, 0x6D61696E, 0x00000000, 0x09000000, 0x11000000, 0x10000300,
+		0x04000000, 0x07000000, 0x03000300, 0x02000000, 0xC2010000, 0x04000A00, 0x474C5F47, 0x4F4F474C,
+		0x455F6370, 0x705F7374, 0x796C655F, 0x6C696E65, 0x5F646972, 0x65637469, 0x76650000, 0x04000800,
+		0x474C5F47, 0x4F4F474C, 0x455F696E, 0x636C7564, 0x655F6469, 0x72656374, 0x69766500, 0x05000400,
+		0x04000000, 0x6D61696E, 0x00000000, 0x05000400, 0x09000000, 0x636F6C6F, 0x72000000, 0x05000500,
+		0x0D000000, 0x74657853, 0x616D706C, 0x65720000, 0x05000300, 0x11000000, 0x75760000, 0x47000400,
+		0x09000000, 0x1E000000, 0x00000000, 0x47000400, 0x0D000000, 0x22000000, 0x00000000, 0x47000400,
+		0x0D000000, 0x21000000, 0x00000000, 0x47000400, 0x11000000, 0x1E000000, 0x00000000, 0x13000200,
+		0x02000000, 0x21000300, 0x03000000, 0x02000000, 0x16000300, 0x06000000, 0x20000000, 0x17000400,
+		0x07000000, 0x06000000, 0x04000000, 0x20000400, 0x08000000, 0x03000000, 0x07000000, 0x3B000400,
+		0x08000000, 0x09000000, 0x03000000, 0x19000900, 0x0A000000, 0x06000000, 0x01000000, 0x00000000,
+		0x00000000, 0x00000000, 0x01000000, 0x00000000, 0x1B000300, 0x0B000000, 0x0A000000, 0x20000400,
+		0x0C000000, 0x00000000, 0x0B000000, 0x3B000400, 0x0C000000, 0x0D000000, 0x00000000, 0x17000400,
+		0x0F000000, 0x06000000, 0x02000000, 0x20000400, 0x10000000, 0x01000000, 0x0F000000, 0x3B000400,
+		0x10000000, 0x11000000, 0x01000000, 0x36000500, 0x02000000, 0x04000000, 0x00000000, 0x03000000,
+		0xF8000200, 0x05000000, 0x3D000400, 0x0B000000, 0x0E000000, 0x0D000000, 0x3D000400, 0x0F000000,
+		0x12000000, 0x11000000, 0x57000500, 0x07000000, 0x13000000, 0x0E000000, 0x12000000, 0x3E000300,
+		0x09000000, 0x13000000, 0xFD000100, 0x38000100
 	};
 
 	for (size_t i = 0; i < sizeof(vs) / sizeof(uint32); i++)
@@ -763,10 +828,8 @@ void GraphicsAPI::createGraphicsPipeline()
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1; // Optional
+	pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout; // Optional
 
 	if (vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout) != VK_SUCCESS)
 	{
@@ -841,6 +904,307 @@ void GraphicsAPI::createCommandPool()
 	}
 }
 
+void GraphicsAPI::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+{
+	VkBufferCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.size = size;
+	createInfo.usage = usage;
+	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateBuffer(_device, &createInfo, nullptr, &buffer) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to create buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(_device, buffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(_device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to allocate buffer memory!");
+	}
+
+	vkBindBufferMemory(_device, buffer, bufferMemory, 0);
+}
+
+uint32 GraphicsAPI::findMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memProperties);
+
+	for (uint32 i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		if (typeFilter & BIT(i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+
+	GG_CRITICAL("Failed to find suitable memory type!");
+	return 0;
+}
+
+void GraphicsAPI::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+{
+
+
+	VkImageCreateInfo imageInfo{};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+
+	imageInfo.format = format;
+	imageInfo.tiling = tiling;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = usage;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.flags = 0;
+
+	if (vkCreateImage(_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to create texture image!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(_device, image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(_device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+	{
+		GG_CRITICAL("failed to allocate image memory!");
+	}
+
+	vkBindImageMemory(_device, image, imageMemory, 0);
+}
+
+void GraphicsAPI::createTextureImage()
+{
+	VkDeviceSize size = _textureWidth * _textureHeight * _textureChannel;
+
+	GG_ASSERT(size != 0, "Size should't be zero!");
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
+	::memcpy(data, _textureBuffer, static_cast<size_t>(size));
+	vkUnmapMemory(_device, stagingBufferMemory);
+
+	createImage(_textureWidth,
+		_textureHeight,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		_textureImage,
+		_textureImageMemory
+	);
+
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	copyBufferToImage(stagingBuffer, _textureImage, _textureWidth, _textureHeight);
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(_device, stagingBuffer, nullptr);
+	vkFreeMemory(_device, stagingBufferMemory, nullptr);
+}
+
+void GraphicsAPI::createTextureSampler()
+{
+	VkSamplerCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	createInfo.magFilter = VK_FILTER_LINEAR;
+	createInfo.minFilter = VK_FILTER_LINEAR;
+	createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(_physicalDevice, &properties);
+	createInfo.anisotropyEnable = VK_TRUE;
+	createInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+	createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	createInfo.unnormalizedCoordinates = VK_FALSE;
+	createInfo.compareEnable = VK_FALSE;
+	createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+	createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	createInfo.mipLodBias = 0.0f;
+	createInfo.minLod = 0.0f;
+	createInfo.maxLod = 0.0f;
+
+	if (vkCreateSampler(_device, &createInfo, nullptr, &_textureSampler) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to create texture sampler!");
+	}
+}
+
+void GraphicsAPI::updateTextureImage()
+{
+	// TODO: Update Texture
+	VkDeviceSize size = _textureWidth * _textureHeight * _textureChannel;
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(_device, stagingBufferMemory, 0, size, 0, &data);
+	::memcpy(data, _textureBuffer, static_cast<size_t>(size));
+	vkUnmapMemory(_device, stagingBufferMemory);
+
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	copyBufferToImage(stagingBuffer, _textureImage, _textureWidth, _textureHeight);
+	transitionImageLayout(_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(_device, stagingBuffer, nullptr);
+	vkFreeMemory(_device, stagingBufferMemory, nullptr);
+
+	_needUpdateTexture = false;
+}
+
+void GraphicsAPI::createTextureImageView()
+{
+	_textureImageView = createImageView(_textureImage, VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+VkCommandBuffer GraphicsAPI::beginSingleTimeCommands()
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = _commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void GraphicsAPI::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+{
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(_graphicsQueue);
+
+	vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
+}
+
+void GraphicsAPI::copyBufferToImage(VkBuffer buffer, VkImage image, uint32 width, uint32 height)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	VkBufferImageCopy region = {};
+	region.bufferOffset = 0;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight = 0;
+
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+
+	region.imageOffset = { 0, 0, 0 };
+	region.imageExtent =
+	{
+		width,
+		height,
+		1
+	};
+
+	vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+
+	endSingleTimeCommands(commandBuffer);
+}
+
+void GraphicsAPI::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.levelCount = 1;
+
+	VkPipelineStageFlags sourceStage;
+	VkPipelineStageFlags destinationStage;
+
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else
+	{
+		GG_CRITICAL("unsupported layout transition!");
+	}
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		sourceStage, destinationStage,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &barrier
+	);
+
+	endSingleTimeCommands(commandBuffer);
+}
+
 void GraphicsAPI::createCommandBuffers()
 {
 	_commandBuffers.resize(_swapChainFramebuffers.size());
@@ -909,6 +1273,63 @@ void GraphicsAPI::createDescriptorPool()
 	if (vkCreateDescriptorPool(_device, &createInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
 	{
 		GG_CRITICAL("Fail to create Descriptor pool!");
+	}
+}
+
+void GraphicsAPI::createDescriptorSetLayout()
+{
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 0;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	std::array<VkDescriptorSetLayoutBinding, 1> bindings = { samplerLayoutBinding };
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<uint32>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
+
+	if (vkCreateDescriptorSetLayout(_device, &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
+	{
+		GG_CRITICAL("Failed to create descriptor set layout!");
+	}
+}
+
+void GraphicsAPI::createDescriptorSets()
+{
+	std::vector<VkDescriptorSetLayout> layouts(s_maxSubmitIndex, _descriptorSetLayout);
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = _descriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(s_maxSubmitIndex);
+	allocInfo.pSetLayouts = layouts.data();
+
+	_descriptorSets.resize(s_maxSubmitIndex);
+	if (vkAllocateDescriptorSets(_device, &allocInfo, _descriptorSets.data()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
+
+	for (size_t i = 0; i < s_maxSubmitIndex; i++)
+	{
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = _textureImageView;
+		imageInfo.sampler = _textureSampler;
+
+		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = _descriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(_device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
@@ -993,6 +1414,11 @@ void GraphicsAPI::bindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipelin
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
+void GraphicsAPI::bindDescriptorSets(VkCommandBuffer commandBuffer)
+{
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[_imageIndex], 0, nullptr);
+}
+
 void GraphicsAPI::setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height)
 {
 	VkViewport viewport{};
@@ -1061,7 +1487,10 @@ bool GraphicsAPI::isDeviceSuitable(VkPhysicalDevice device)
 		isSwapChainAdequate = !(swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty());
 	}
 
-	return indices.IsComplete() && isExtensionSupported && isSwapChainAdequate;
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
+	return indices.IsComplete() && isExtensionSupported && isSwapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 GraphicsAPI::QueueFamilyIndices GraphicsAPI::findQueueFamilies(VkPhysicalDevice device)
@@ -1191,13 +1620,14 @@ VkPresentModeKHR GraphicsAPI::chooseSwapPresentMode(const std::vector<VkPresentM
 
 VkExtent2D GraphicsAPI::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
+	VkExtent2D extent;
 	if (capabilities.currentExtent.width != UINT32_MAX)
 	{
-		return capabilities.currentExtent;
+		extent = capabilities.currentExtent;
 	}
 	else
 	{
-		int width, height;
+		uint32 width, height;
 		RECT rect;
 		::GetWindowRect(_hWnd, &rect);
 		width = rect.right - rect.left;
@@ -1205,15 +1635,22 @@ VkExtent2D GraphicsAPI::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabil
 
 		VkExtent2D actualExtent =
 		{
-			static_cast<uint32_t>(width),
-			static_cast<uint32_t>(height)
+			static_cast<uint32>(width),
+			static_cast<uint32>(height)
 		};
 
 		actualExtent.width = Utility::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
 		actualExtent.height = Utility::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
-		return actualExtent;
+		extent = actualExtent;
 	}
+
+	if (!_textureBuffer)
+	{
+		createTextureBuffer(_textureWidth, _textureHeight);
+	}
+
+	return extent;
 }
 
 VkSurfaceFormatKHR GraphicsAPI::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -1227,6 +1664,17 @@ VkSurfaceFormatKHR GraphicsAPI::chooseSwapSurfaceFormat(const std::vector<VkSurf
 	}
 
 	return availableFormats[0];
+}
+
+void GraphicsAPI::createTextureBuffer(uint32 width, uint32 height)
+{
+	if (_textureBuffer)
+	{
+		delete[] _textureBuffer;
+		_textureBuffer = nullptr;
+	}
+
+	_textureBuffer = new uint8[width * height * _textureChannel]{ 0 };
 }
 
 VkShaderModule GraphicsAPI::createShaderModule(uint32* spvCode, size_t size)

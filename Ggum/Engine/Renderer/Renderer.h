@@ -17,6 +17,8 @@ public:
 	//...
 	virtual void OnResize(uint32 width, uint32 height) override;
 
+	virtual void SetPixelForDebug(uint32 row, uint32 col, uint8* color) override;
+
 private:
 	//...
 };
