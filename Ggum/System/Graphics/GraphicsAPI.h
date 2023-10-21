@@ -32,6 +32,8 @@ public:
 
 	void SetPixel(uint32 row, uint32 col, uint8* color);
 	void SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, uint8 a);
+	void SetPixel(uint32 row, uint32 col, float* color);
+	void SetPixel(uint32 row, uint32 col, float r, float g, float b, float a);
 
 	inline void SetMinimized(bool isMinimized) { _isMinimized = isMinimized; }
 

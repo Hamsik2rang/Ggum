@@ -200,15 +200,15 @@ void GraphicsAPI::initImGui()
 
 void GraphicsAPI::Draw()
 {
-	if (!_isBeginCalled[_imageIndex]) 
+	if (!_isBeginCalled[_imageIndex])
 	{
 		return;
 	}
-	if (_isMinimized) 
+	if (_isMinimized)
 	{
 		return;
 	}
-	if (_needUpdateTexture) 
+	if (_needUpdateTexture)
 	{
 		updateTextureImage();
 	}
@@ -376,6 +376,18 @@ void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8 r, uint8 g, uint8 b, ui
 {
 	uint8 color[]{ r, g, b, a };
 	SetPixel(row, col, color);
+}
+
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, float* color)
+{
+	uint8 u8color[]{ static_cast<uint8>(color[0] * 255.0f), static_cast<uint8>(color[1] * 255.0f) ,static_cast<uint8>(color[2] * 255.0f) ,static_cast<uint8>(color[3] * 255.0f) };
+	SetPixel(row, col, u8color);
+}
+
+void GraphicsAPI::SetPixel(uint32 row, uint32 col, float r, float g, float b, float a)
+{
+	uint8 u8color[]{ static_cast<uint8>(r * 255.0f), static_cast<uint8>(g * 255.0f), static_cast<uint8>(b * 255.0f), static_cast<uint8>(a * 255.0f) };
+	SetPixel(row, col, u8color);
 }
 
 void GraphicsAPI::createInstance()
@@ -1036,7 +1048,7 @@ void GraphicsAPI::createTextureSampler()
 	createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	
+
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(_physicalDevice, &properties);
 	createInfo.anisotropyEnable = VK_TRUE;
