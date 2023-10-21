@@ -34,10 +34,11 @@ void TestRenderPass::OnRender()
 	t1 += 3;
 	t2 += 5;
 	uint8 color[]{ t0, t1, t2, 255 };
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 500; i++)
 	{
-		for (int j = 0; j < 1000; j++)
+		for (int j = 0; j < 500; j++)
 		{
+		
 			_renderer->SetPixelForDebug(i, j, color);
 		}
 	}
