@@ -95,5 +95,8 @@
     <ClCompile Include="ImGui\ImGuiSource\imgui_tables.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Utility\Random.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

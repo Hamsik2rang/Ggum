@@ -50,15 +50,15 @@ void TestRenderPass::OnGUI()
 	static float f = 0.0f;
 	static int counter = 0;
 
-	ImGui::Begin(_name.c_str());                          // Create a window called "Hello, world!" and append into it.
+	ImGui::Begin(_name.c_str());
 
-	ImGui::Text("This is %s Panel", _name.c_str());                   // Display some text (you can use a format strings too)
-
-	ImGui::ColorEdit3("clear color", (float*)&clearColor);  // Edit 3 floats representing a color
-	_color[0] = clearColor.x * 255;
-	_color[1] = clearColor.y * 255;
-	_color[2] = clearColor.z * 255;
-	_color[3] = clearColor.w * 255;
+	ImGui::Text("This is %s Panel", _name.c_str());
+	ImGui::NewLine();
+	//ImGui::ColorEdit3("clear color", (float*)&clearColor);
+	//_color[0] = clearColor.x * 255;
+	//_color[1] = clearColor.y * 255;
+	//_color[2] = clearColor.z * 255;
+	//_color[3] = clearColor.w * 255;
 
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -67,39 +67,55 @@ void TestRenderPass::OnGUI()
 
 void TestRenderPass::drawG(uint32 row, uint32 col, uint8* color)
 {
+	uint8 randomColor[]{ 0,0,0,255 };
 	for (uint32 i = row; i < row + 50; i++)
 	{
 		for (uint32 j = col; j < col + 200; j++)
 		{
-			_renderer->SetPixelForDebug(i, j, color);
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
+			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
 	for (uint32 i = row + 50; i < row + 250; i++)
 	{
 		for (uint32 j = col; j < col + 50; j++)
 		{
-			_renderer->SetPixelForDebug(i, j, color);
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
+			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
 	for (uint32 i = row + 200; i < row + 250; i++)
 	{
 		for (uint32 j = col + 50; j < col + 200; j++)
 		{
-			_renderer->SetPixelForDebug(i, j, color);
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
+			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
 	for (uint32 i = row + 100; i < row + 200; i++)
 	{
 		for (uint32 j = col + 150; j < col + 200; j++)
 		{
-			_renderer->SetPixelForDebug(i, j, color);
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
+			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
 	for (uint32 i = row + 100; i < row + 150; i++)
 	{
 		for (uint32 j = col + 100; j < col + 150; j++)
 		{
-			_renderer->SetPixelForDebug(i, j, color);
+			randomColor[0] = GG::Random::UInt();
+			randomColor[1] = GG::Random::UInt();
+			randomColor[2] = GG::Random::UInt();
+			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
 }
