@@ -362,6 +362,10 @@ void GraphicsAPI::End()
 
 void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8* color)
 {
+	if (row >= _textureHeight || col >= _textureWidth)
+	{
+		return;
+	}
 	uint32 index = (_textureWidth * row + col) * _textureChannel;
 	for (uint32 i = 0; i < 4; i++)
 	{
