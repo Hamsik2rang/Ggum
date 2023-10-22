@@ -36,6 +36,8 @@ public:
 	void SetPixel(uint32 row, uint32 col, float r, float g, float b, float a);
 
 	inline void SetMinimized(bool isMinimized) { _isMinimized = isMinimized; }
+	inline uint32 GetFramebufferWidth() const { return _textureWidth; }
+	inline uint32 GetFramebufferHeight() const { return _textureHeight; }
 
 private:
 
