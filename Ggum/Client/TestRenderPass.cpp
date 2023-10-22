@@ -29,13 +29,13 @@ void TestRenderPass::OnEvent(GG::Event& e)
 
 void TestRenderPass::OnRender()
 {
-	for (int i = 0; i < 720; i++)
-	{
-		for (int j = 0; j < 1280; j++)
-		{
-			_renderer->SetPixelForDebug(i, j, _color);
-		}
-	}
+	static uint8 r = 0, g = 0, b = 0;
+	r += 2;
+	g += 3;
+	b += 5;
+	uint8 color[]{ r, g, b, 255 };
+	drawG(200, 350, color);
+	drawG(200, 650, color);
 }
 
 void TestRenderPass::OnGUI()
@@ -63,4 +63,43 @@ void TestRenderPass::OnGUI()
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();
+}
+
+void TestRenderPass::drawG(uint32 row, uint32 col, uint8* color)
+{
+	for (uint32 i = row; i < row + 50; i++)
+	{
+		for (uint32 j = col; j < col + 200; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
+	for (uint32 i = row + 50; i < row + 250; i++)
+	{
+		for (uint32 j = col; j < col + 50; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
+	for (uint32 i = row + 200; i < row + 250; i++)
+	{
+		for (uint32 j = col + 50; j < col + 200; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
+	for (uint32 i = row + 100; i < row + 200; i++)
+	{
+		for (uint32 j = col + 150; j < col + 200; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
+	for (uint32 i = row + 100; i < row + 150; i++)
+	{
+		for (uint32 j = col + 100; j < col + 150; j++)
+		{
+			_renderer->SetPixelForDebug(i, j, color);
+		}
+	}
 }

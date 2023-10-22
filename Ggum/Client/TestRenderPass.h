@@ -23,5 +23,7 @@ public:
 	virtual void OnGUI();
 
 private:
+	void drawG(uint32 row, uint32 col, uint8* color);
+
 	uint8 _color[4];
 };
