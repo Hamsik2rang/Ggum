@@ -77,6 +77,7 @@ private:
 	void createTextureImage();
 	void createTextureSampler();
 	void updateTextureImage();
+	void clearTextureImage();
 	void createTextureImageView();
 	void createCommandBuffers();
 	void createSyncObjects();

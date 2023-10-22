@@ -358,6 +358,8 @@ void GraphicsAPI::End()
 	_submitIndex = (_submitIndex + 1) % s_maxSubmitIndex;
 
 	_isBeginCalled[_imageIndex] = false;
+
+	clearTextureImage();
 }
 
 void GraphicsAPI::SetPixel(uint32 row, uint32 col, uint8* color)
@@ -968,8 +970,6 @@ uint32 GraphicsAPI::findMemoryType(uint32 typeFilter, VkMemoryPropertyFlags prop
 
 void GraphicsAPI::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
-
-
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -1096,6 +1096,11 @@ void GraphicsAPI::updateTextureImage()
 	vkFreeMemory(_device, stagingBufferMemory, nullptr);
 
 	_needUpdateTexture = false;
+}
+
+void GraphicsAPI::clearTextureImage()
+{
+	::memset(_textureBuffer, 0, _textureWidth * _textureHeight * _textureChannel);
 }
 
 void GraphicsAPI::createTextureImageView()
