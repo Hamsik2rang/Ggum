@@ -34,8 +34,8 @@ void TestRenderPass::OnRender()
 	g += 3;
 	b += 5;
 	uint8 color[]{ r, g, b, 255 };
-	drawG(200, 350, color);
-	drawG(200, 650, color);
+	drawG(225, 400, color);
+	drawG(225, 700, color);
 }
 
 void TestRenderPass::OnGUI()
@@ -59,7 +59,6 @@ void TestRenderPass::OnGUI()
 	//_color[1] = clearColor.y * 255;
 	//_color[2] = clearColor.z * 255;
 	//_color[3] = clearColor.w * 255;
-
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();
