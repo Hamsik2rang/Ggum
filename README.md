@@ -1,5 +1,9 @@
 # Ggum
-Software Renderer
+<center>
+    <img src="./Document/gg.gif">
+</center>
+
+GGum is a Software Rendering Engine.
 
 ## Installation
 ```
