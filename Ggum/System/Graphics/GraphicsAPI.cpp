@@ -8,12 +8,14 @@
 #include <vulkan/vulkan_win32.h>
 #include <cstring>
 
+static bool enable_validation_layer = false;
+
 
 namespace GG {
 
 static const std::vector<const char*> validationLayers
 {
-	"VK_LAYER_KHRONOS_validation",
+	//"VK_LAYER_KHRONOS_validation",
 };
 
 static std::vector<const char*> deviceExtensions
@@ -26,7 +28,6 @@ static std::vector<const char*> layerExtensions
 {
 	VK_KHR_SURFACE_EXTENSION_NAME,
 	VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-	VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 };
 
 
@@ -255,8 +256,10 @@ void GraphicsAPI::Release()
 	vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
 
 	vkDestroyDevice(_device, nullptr);
-
-	DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
+	if (enable_validation_layer)
+	{
+		DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
+	}
 
 	vkDestroySurfaceKHR(_instance, _surface, nullptr);
 
@@ -398,7 +401,10 @@ void GraphicsAPI::SetPixel(uint32 row, uint32 col, float r, float g, float b, fl
 
 void GraphicsAPI::createInstance()
 {
-	GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
+	if (enable_validation_layer)
+	{
+		GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
+	}
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -412,15 +418,29 @@ void GraphicsAPI::createInstance()
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
+	if (enable_validation_layer)
+	{
+		layerExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+
 	createInfo.enabledExtensionCount = static_cast<uint32>(layerExtensions.size());
 	createInfo.ppEnabledExtensionNames = layerExtensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
-	createInfo.ppEnabledLayerNames = validationLayers.data();
+	if (enable_validation_layer)
+	{
+
+		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
 
 	populateDebugMessengerCreateInfo(debugCreateInfo);
 	createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
+	}
 
 	if (vkCreateInstance(&createInfo, nullptr, &_instance) != VK_SUCCESS)
 	{
@@ -430,6 +450,8 @@ void GraphicsAPI::createInstance()
 
 void GraphicsAPI::setupDebugMessenger()
 {
+	if (!enable_validation_layer) return;
+
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 	populateDebugMessengerCreateInfo(createInfo);
 
