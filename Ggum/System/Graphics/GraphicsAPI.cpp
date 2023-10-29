@@ -15,7 +15,7 @@ namespace GG {
 
 static const std::vector<const char*> validationLayers
 {
-	//"VK_LAYER_KHRONOS_validation",
+	"VK_LAYER_KHRONOS_validation",
 };
 
 static std::vector<const char*> deviceExtensions
@@ -433,8 +433,8 @@ void GraphicsAPI::createInstance()
 		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
-	populateDebugMessengerCreateInfo(debugCreateInfo);
-	createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+		populateDebugMessengerCreateInfo(debugCreateInfo);
+		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
 	else
 	{
@@ -533,8 +533,16 @@ void GraphicsAPI::createLogicalDevice()
 	createInfo.enabledExtensionCount = static_cast<uint32>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-	createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
-	createInfo.ppEnabledLayerNames = validationLayers.data();
+	if (enable_validation_layer)
+	{
+		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
+	}
 
 	if (vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS)
 	{
@@ -756,12 +764,12 @@ void GraphicsAPI::createGraphicsPipeline()
 
 	for (size_t i = 0; i < sizeof(vs) / sizeof(uint32); i++)
 	{
-		Utility::swap_endian(vs[i]);
+		Utility::swap_endian(&vs[i], sizeof(uint32));
 	}
 
 	for (size_t i = 0; i < sizeof(fs) / sizeof(uint32); i++)
 	{
-		Utility::swap_endian(fs[i]);
+		Utility::swap_endian(&fs[i], sizeof(uint32));
 	}
 
 	VkShaderModule vertShaderModule = createShaderModule(vs, sizeof(vs));
@@ -1491,6 +1499,8 @@ void GraphicsAPI::draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32
 
 bool GraphicsAPI::checkValidationLayerSupport()
 {
+	if (!enable_validation_layer) return false;
+
 	uint32 layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
