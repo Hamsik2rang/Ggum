@@ -8,7 +8,7 @@
 #include <vulkan/vulkan_win32.h>
 #include <cstring>
 
-static bool enable_validation_layer = false;
+static bool enableValidationLayer = false;
 
 
 namespace GG {
@@ -256,7 +256,7 @@ void GraphicsAPI::Release()
 	vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
 
 	vkDestroyDevice(_device, nullptr);
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
 	}
@@ -401,7 +401,7 @@ void GraphicsAPI::SetPixel(uint32 row, uint32 col, float r, float g, float b, fl
 
 void GraphicsAPI::createInstance()
 {
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
 	}
@@ -418,7 +418,7 @@ void GraphicsAPI::createInstance()
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		layerExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
@@ -427,7 +427,7 @@ void GraphicsAPI::createInstance()
 	createInfo.ppEnabledExtensionNames = layerExtensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 
 		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
@@ -450,7 +450,7 @@ void GraphicsAPI::createInstance()
 
 void GraphicsAPI::setupDebugMessenger()
 {
-	if (!enable_validation_layer) return;
+	if (!enableValidationLayer) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 	populateDebugMessengerCreateInfo(createInfo);
@@ -533,7 +533,7 @@ void GraphicsAPI::createLogicalDevice()
 	createInfo.enabledExtensionCount = static_cast<uint32>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -1499,7 +1499,7 @@ void GraphicsAPI::draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32
 
 bool GraphicsAPI::checkValidationLayerSupport()
 {
-	if (!enable_validation_layer) return false;
+	if (!enableValidationLayer) return false;
 
 	uint32 layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
