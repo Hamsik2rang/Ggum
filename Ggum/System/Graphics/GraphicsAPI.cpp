@@ -8,14 +8,14 @@
 #include <vulkan/vulkan_win32.h>
 #include <cstring>
 
-static bool enable_validation_layer = false;
+static bool enableValidationLayer = false;
 
 
 namespace GG {
 
 static const std::vector<const char*> validationLayers
 {
-	//"VK_LAYER_KHRONOS_validation",
+	"VK_LAYER_KHRONOS_validation",
 };
 
 static std::vector<const char*> deviceExtensions
@@ -256,7 +256,7 @@ void GraphicsAPI::Release()
 	vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
 
 	vkDestroyDevice(_device, nullptr);
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
 	}
@@ -401,7 +401,7 @@ void GraphicsAPI::SetPixel(uint32 row, uint32 col, float r, float g, float b, fl
 
 void GraphicsAPI::createInstance()
 {
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		GG_ASSERT(checkValidationLayerSupport(), "Validation layers requested, but not available.");
 	}
@@ -418,7 +418,7 @@ void GraphicsAPI::createInstance()
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 		layerExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
@@ -427,14 +427,14 @@ void GraphicsAPI::createInstance()
 	createInfo.ppEnabledExtensionNames = layerExtensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	if (enable_validation_layer)
+	if (enableValidationLayer)
 	{
 
 		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
-	populateDebugMessengerCreateInfo(debugCreateInfo);
-	createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+		populateDebugMessengerCreateInfo(debugCreateInfo);
+		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
 	else
 	{
@@ -450,7 +450,7 @@ void GraphicsAPI::createInstance()
 
 void GraphicsAPI::setupDebugMessenger()
 {
-	if (!enable_validation_layer) return;
+	if (!enableValidationLayer) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 	populateDebugMessengerCreateInfo(createInfo);
@@ -533,8 +533,16 @@ void GraphicsAPI::createLogicalDevice()
 	createInfo.enabledExtensionCount = static_cast<uint32>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-	createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
-	createInfo.ppEnabledLayerNames = validationLayers.data();
+	if (enableValidationLayer)
+	{
+		createInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+		createInfo.ppEnabledLayerNames = nullptr;
+	}
 
 	if (vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS)
 	{
@@ -756,12 +764,12 @@ void GraphicsAPI::createGraphicsPipeline()
 
 	for (size_t i = 0; i < sizeof(vs) / sizeof(uint32); i++)
 	{
-		Utility::swap_endian(vs[i]);
+		Utility::swap_endian(&vs[i], sizeof(uint32));
 	}
 
 	for (size_t i = 0; i < sizeof(fs) / sizeof(uint32); i++)
 	{
-		Utility::swap_endian(fs[i]);
+		Utility::swap_endian(&fs[i], sizeof(uint32));
 	}
 
 	VkShaderModule vertShaderModule = createShaderModule(vs, sizeof(vs));
@@ -1491,6 +1499,8 @@ void GraphicsAPI::draw(VkCommandBuffer commandBuffer, uint32 vertexCount, uint32
 
 bool GraphicsAPI::checkValidationLayerSupport()
 {
+	if (!enableValidationLayer) return false;
+
 	uint32 layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 

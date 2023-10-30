@@ -30,14 +30,16 @@ inline std::string wstring_to_string(const std::wstring& wstr)
 	return str;
 }
 
-inline void swap_endian(uint32& bits)
+inline void swap_endian(void* data, size_t size)
 {
-	uint8* left = (uint8*)&bits;
-	uint8* right = left + 3;
-	std::swap(*left, *right);
-	left++;
-	right--;
-	std::swap(*left, *right);
+	uint8* left = (uint8*)data;
+	uint8* right = left + (size - 1);
+	for (size_t i = 0; i < size / 2; i++)
+	{
+		std::swap(*left, *right);
+		left++;
+		right--;
+	}
 }
 
 template <typename T>
