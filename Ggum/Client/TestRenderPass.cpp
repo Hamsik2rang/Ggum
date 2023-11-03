@@ -40,7 +40,7 @@ void TestRenderPass::OnRender()
 
 void TestRenderPass::OnGUI()
 {
-
+	if (Input::IsKeyDown(Key::T)) return;
 	static bool showDemoWindow = false;
 	static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	ImGuiIO& io = ImGui::GetIO();
@@ -53,7 +53,7 @@ void TestRenderPass::OnGUI()
 
 	ImGui::Begin(_name.c_str());
 
-	ImGui::Text("This is %s Panel", Input::IsKeyDown(Key::T) ? "test" : _name.c_str());
+	ImGui::Text("This is %s Panel", _name.c_str());
 	ImGui::NewLine();
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
