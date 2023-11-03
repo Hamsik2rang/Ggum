@@ -40,6 +40,7 @@ void TestRenderPass::OnRender()
 
 void TestRenderPass::OnGUI()
 {
+
 	static bool showDemoWindow = false;
 	static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	ImGuiIO& io = ImGui::GetIO();
@@ -52,13 +53,8 @@ void TestRenderPass::OnGUI()
 
 	ImGui::Begin(_name.c_str());
 
-	ImGui::Text("This is %s Panel", _name.c_str());
+	ImGui::Text("This is %s Panel", Input::IsKeyDown(Key::T) ? "test" : _name.c_str());
 	ImGui::NewLine();
-	//ImGui::ColorEdit3("clear color", (float*)&clearColor);
-	//_color[0] = clearColor.x * 255;
-	//_color[1] = clearColor.y * 255;
-	//_color[2] = clearColor.z * 255;
-	//_color[3] = clearColor.w * 255;
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();

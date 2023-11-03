@@ -64,8 +64,6 @@ void Application::Run()
 			DispatchMessage(&msg);
 		}
 
-
-
 		// Rendering---------------------
 		_renderer->Prepare();
 

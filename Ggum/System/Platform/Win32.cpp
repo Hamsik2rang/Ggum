@@ -9,6 +9,8 @@
 
 #include "Graphics/GraphicsAPI.h"
 
+#include "Core/Input.h"
+
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -83,12 +85,15 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		int repeatCount = LOWORD(lParam);
 		KeyPressedEvent e(static_cast<int>(wParam), repeatCount);
+		Input::SetKeyDown(static_cast<KeyCode>(wParam));
+
 		data->eventCallback(e);
 		break;
 	}
 	case WM_KEYUP:
 	{
 		KeyReleasedEvent e(static_cast<int>(wParam));
+		Input::SetKeyUp(static_cast<KeyCode>(wParam));
 
 		data->eventCallback(e);
 		break;
@@ -100,7 +105,7 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		::ScreenToClient(hWnd, &cursorPos);
 
 		MouseMovedEvent e(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y));
-		
+
 		data->eventCallback(e);
 		break;
 	}
@@ -108,7 +113,7 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		short z = GET_WHEEL_DELTA_WPARAM(wParam);
 		MouseScrolledEvent e(z, 0.0f);
-		
+
 		data->eventCallback(e);
 		break;
 	}
@@ -117,10 +122,11 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDOWN:
 	{
 		int pressedButton = static_cast<int>(wParam);
-		if		(msg == WM_LBUTTONDOWN);//pressedButton =
-		else if (msg == WM_MBUTTONDOWN);
-		else if (msg == WM_RBUTTONDOWN);
+		if (msg == WM_LBUTTONDOWN) { pressedButton = Mouse::Left; }
+		else if (msg == WM_MBUTTONDOWN) { pressedButton = Mouse::Middle; }
+		else if (msg == WM_RBUTTONDOWN) { pressedButton = Mouse::Right; }
 
+		Input::SetButtonDown(pressedButton);
 		MouseButtonPressedEvent e(pressedButton);
 
 		data->eventCallback(e);
@@ -131,10 +137,11 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 	{
 		int releasedButton = static_cast<int>(wParam);
-		if		(msg == WM_LBUTTONUP);
-		else if (msg == WM_MBUTTONUP);
-		else if (msg == WM_RBUTTONUP);
+		if (msg == WM_LBUTTONUP) { releasedButton = Mouse::Left; }
+		else if (msg == WM_MBUTTONUP) { releasedButton = Mouse::Middle; }
+		else if (msg == WM_RBUTTONUP) { releasedButton = Mouse::Right; }
 
+		Input::SetButtonUp(releasedButton);
 		MouseButtonReleasedEvent e(releasedButton);
 
 		data->eventCallback(e);
@@ -167,7 +174,7 @@ LRESULT window_process(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 	}
-	default: 
+	default:
 	{
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 		break;
