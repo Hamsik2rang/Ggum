@@ -66,7 +66,7 @@ protected:
 class EventDispatcher
 {
 	template <typename T>
-	using EventFunc = bool(*)(T&);
+	using EventFunc = std::function<bool(T&)>;
 
 public:
 	EventDispatcher(Event& event)

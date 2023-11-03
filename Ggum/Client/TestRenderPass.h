@@ -24,6 +24,7 @@ public:
 
 private:
 	void drawG(uint32 row, uint32 col, uint8* color);
+	bool onKeyPressedEvent(GG::KeyPressedEvent& e);
 
 	uint8 _color[4];
 };

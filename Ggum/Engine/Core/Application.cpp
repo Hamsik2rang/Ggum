@@ -58,10 +58,15 @@ void Application::Run()
 		float deltaTime = curTime - lastTime;
 		lastTime = curTime;
 
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE ))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			while (PeekMessage(&msg, nullptr, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 
 		// Rendering---------------------

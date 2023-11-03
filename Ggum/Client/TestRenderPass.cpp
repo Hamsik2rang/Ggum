@@ -1,6 +1,5 @@
 #include "TestRenderPass.h"
 
-
 using namespace GG;
 
 TestRenderPass::TestRenderPass(std::string passName, GG::RenderPassOrder order)
@@ -22,9 +21,10 @@ void TestRenderPass::OnUpdate(float deltaTime)
 
 }
 
-void TestRenderPass::OnEvent(GG::Event& e)
+void TestRenderPass::OnEvent(Event& e)
 {
-
+	EventDispatcher dispatcher(e);
+	dispatcher.Dispatch<GG::KeyPressedEvent>(std::bind(&TestRenderPass::onKeyPressedEvent, this, std::placeholders::_1));
 }
 
 void TestRenderPass::OnRender()
@@ -107,10 +107,17 @@ void TestRenderPass::drawG(uint32 row, uint32 col, uint8* color)
 	{
 		for (uint32 j = col + 100; j < col + 150; j++)
 		{
-			randomColor[0] = GG::Random::UInt();
-			randomColor[1] = GG::Random::UInt();
-			randomColor[2] = GG::Random::UInt();
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
 			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
+}
+
+bool TestRenderPass::onKeyPressedEvent(GG::KeyPressedEvent& e)
+{
+	GG_DEBUG("{0}", e.GetRepeatCount());
+
+	return true;
 }
