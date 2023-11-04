@@ -54,46 +54,46 @@ void Application::Run()
 
 	while (msg.message != WM_QUIT)
 	{
-		float curTime = _timer.Elapsed();
-		float deltaTime = curTime - lastTime;
-		lastTime = curTime;
-
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
-
-
-		// Rendering---------------------
-		_renderer->Prepare();
-
-		for (const auto& renderPass : _renderPath)
+		else
 		{
-			renderPass->OnUpdate(deltaTime);
-			renderPass->OnRender();
+			float curTime = _timer.Elapsed();
+			float deltaTime = curTime - lastTime;
+			lastTime = curTime;
+
+
+			// Rendering---------------------
+			_renderer->Prepare();
+
+			for (const auto& renderPass : _renderPath)
+			{
+				renderPass->OnUpdate(deltaTime);
+				renderPass->OnRender();
+			}
+
+			_renderer->Submit();
+			// Rendering---------------------
+
+			// GUI Rendering-----------------
+			_renderer->PrepareGUI();
+
+			for (const auto& renderPass : _renderPath)
+			{
+				renderPass->OnGUI();
+			}
+			_renderer->SubmitGUI();
+			// GUI Rendering-----------------
+			_renderer->Present();
+
+
+			// Window Update-----------------
+			_window->OnUpdate();
+			// Window Update-----------------
 		}
-
-		_renderer->Submit();
-		// Rendering---------------------
-		
-		// GUI Rendering-----------------
-		_renderer->PrepareGUI();
-
-		for (const auto& renderPass : _renderPath)
-		{
-			renderPass->OnGUI();
-		}
-		_renderer->SubmitGUI();
-		// GUI Rendering-----------------
-		_renderer->Present();
-
-
-		// Window Update-----------------
-		_window->OnUpdate();
-		// Window Update-----------------
-
 	}
 }
 

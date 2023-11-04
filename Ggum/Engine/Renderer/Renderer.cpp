@@ -19,7 +19,6 @@ void Renderer::Prepare()
 void Renderer::Submit()
 {
 	_api->Draw();
-
 }
 
 void Renderer::PrepareGUI()

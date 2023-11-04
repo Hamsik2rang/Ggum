@@ -1,6 +1,5 @@
 #include "TestRenderPass.h"
 
-
 using namespace GG;
 
 TestRenderPass::TestRenderPass(std::string passName, GG::RenderPassOrder order)
@@ -22,9 +21,10 @@ void TestRenderPass::OnUpdate(float deltaTime)
 
 }
 
-void TestRenderPass::OnEvent(GG::Event& e)
+void TestRenderPass::OnEvent(Event& e)
 {
-
+	EventDispatcher dispatcher(e);
+	dispatcher.Dispatch<GG::KeyPressedEvent>(std::bind(&TestRenderPass::onKeyPressedEvent, this, std::placeholders::_1));
 }
 
 void TestRenderPass::OnRender()
@@ -40,6 +40,7 @@ void TestRenderPass::OnRender()
 
 void TestRenderPass::OnGUI()
 {
+	if (Input::IsKeyDown(Key::T)) return;
 	static bool showDemoWindow = false;
 	static ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	ImGuiIO& io = ImGui::GetIO();
@@ -54,11 +55,6 @@ void TestRenderPass::OnGUI()
 
 	ImGui::Text("This is %s Panel", _name.c_str());
 	ImGui::NewLine();
-	//ImGui::ColorEdit3("clear color", (float*)&clearColor);
-	//_color[0] = clearColor.x * 255;
-	//_color[1] = clearColor.y * 255;
-	//_color[2] = clearColor.z * 255;
-	//_color[3] = clearColor.w * 255;
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 	ImGui::End();
@@ -111,10 +107,17 @@ void TestRenderPass::drawG(uint32 row, uint32 col, uint8* color)
 	{
 		for (uint32 j = col + 100; j < col + 150; j++)
 		{
-			randomColor[0] = GG::Random::UInt();
-			randomColor[1] = GG::Random::UInt();
-			randomColor[2] = GG::Random::UInt();
+			randomColor[0] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[1] = static_cast<uint8>(GG::Random::UInt());
+			randomColor[2] = static_cast<uint8>(GG::Random::UInt());
 			_renderer->SetPixelForDebug(i, j, randomColor);
 		}
 	}
+}
+
+bool TestRenderPass::onKeyPressedEvent(GG::KeyPressedEvent& e)
+{
+	GG_DEBUG("{0}", e.GetKeyCode());
+
+	return true;
 }
