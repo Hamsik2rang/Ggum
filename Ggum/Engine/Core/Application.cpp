@@ -54,18 +54,17 @@ void Application::Run()
 
 	while (msg.message != WM_QUIT)
 	{
-		float curTime = _timer.Elapsed();
-		float deltaTime = curTime - lastTime;
-		lastTime = curTime;
-
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-
 		}
 		else
 		{
+			float curTime = _timer.Elapsed();
+			float deltaTime = curTime - lastTime;
+			lastTime = curTime;
+
 
 			// Rendering---------------------
 			_renderer->Prepare();
@@ -94,7 +93,6 @@ void Application::Run()
 			// Window Update-----------------
 			_window->OnUpdate();
 			// Window Update-----------------
-
 		}
 	}
 }

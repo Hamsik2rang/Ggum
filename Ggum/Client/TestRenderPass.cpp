@@ -117,7 +117,7 @@ void TestRenderPass::drawG(uint32 row, uint32 col, uint8* color)
 
 bool TestRenderPass::onKeyPressedEvent(GG::KeyPressedEvent& e)
 {
-	GG_DEBUG("{0}", e.GetRepeatCount());
+	GG_DEBUG("{0}", e.GetKeyCode());
 
 	return true;
 }
