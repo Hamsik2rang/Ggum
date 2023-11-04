@@ -2,6 +2,7 @@
 
 #include "Base.hpp"
 #include "Core/InputCode.hpp"
+#include "Core/Log.h"
 
 namespace GG {
 
@@ -14,21 +15,22 @@ struct Axis
 class Input
 {
 public:
-	static bool IsButtonDown(MouseCode mouseButton);
-	static bool IsButtonUp(MouseCode mouseButton);
-	static bool IsKeyDown(KeyCode keyCode);
-	static bool IsKeyUp(KeyCode keyCode);
+	inline static bool IsButtonDown(MouseCode mouseButton) { GG_ASSERT(mouseButton < 256, "Invalid button"); return s_buttonMap & BIT_UINT64(mouseButton % s_bitCount); }
+	inline static bool IsButtonUp(MouseCode mouseButton) { GG_ASSERT(mouseButton < 256, "Invalid button"); return !(s_buttonMap & BIT_UINT64(mouseButton % s_bitCount)); }
+	inline static bool IsKeyDown(KeyCode keyCode) { GG_ASSERT(keyCode < 256, "invalid keycode"); return s_keyMap[keyCode / s_bitCount] & BIT_UINT64(keyCode % s_bitCount); }
+	inline static bool IsKeyUp(KeyCode keyCode) { GG_ASSERT(keyCode < 256, "invalid keycode"); return !(s_keyMap[keyCode / s_bitCount] & BIT_UINT64(keyCode % s_bitCount)); }
 
-	static void SetKeyDown(KeyCode keyCode);
-	static void SetKeyUp(KeyCode keyCode);
-	static void SetButtonDown(MouseCode  mouseButton);
-	static void SetButtonUp(MouseCode  mouseButton);
+	inline static void SetKeyDown(KeyCode keyCode) { GG_ASSERT(keyCode < 256, "invalid keycode"); s_keyMap[keyCode / s_bitCount] |= BIT_UINT64(keyCode % s_bitCount); }
+	inline static void SetKeyUp(KeyCode keyCode) { GG_ASSERT(keyCode < 256, "invalid keycode"); s_keyMap[keyCode / s_bitCount] &= ~BIT_UINT64(keyCode % s_bitCount); }
+	inline static void SetButtonDown(MouseCode  mouseButton) { GG_ASSERT(mouseButton < 256, "Invalid button"); s_buttonMap |= BIT_UINT64(mouseButton % s_bitCount); }
+	inline static void SetButtonUp(MouseCode  mouseButton) { GG_ASSERT(mouseButton < 256, "Invalid button"); s_buttonMap &= ~BIT_UINT64(mouseButton % s_bitCount); }
 
 	inline static Axis GetAxis() { return s_axis; };
 
 private:
 	static Axis s_axis;
 	static uint64 s_keyMap[5];
+	static uint64 s_buttonMap;
 	static const int s_bitCount = 64;
 
 };
