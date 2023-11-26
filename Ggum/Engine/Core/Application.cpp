@@ -46,7 +46,7 @@ Application::~Application()
 
 void Application::Run()
 {
-	GG_TRACE("Application is Runnnnnnnnnnnn.");
+	GG_TRACE("Application is Run.");
 	MSG msg{};
 
 	_timer.Start();
