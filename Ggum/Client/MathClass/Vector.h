@@ -1,4 +1,6 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "../../System/SystemPch.h"
 
 namespace GG {
@@ -251,6 +253,60 @@ namespace GG {
 			}
 			else
 				return Vector4(*this * ((1.0f) / len));
+		}
+
+		Vector4 translate(float x, float y, float z) {
+			Mat4x4 transform = {
+				Vector4(1, 0, 0, x),
+				Vector4(0, 1, 0, y),
+				Vector4(0, 0, 1, z),
+				Vector4(0, 0, 0, 1),
+			};
+
+			return transform * (*this);
+		}
+
+		Vector4 scale(float x, float y, float z) {
+			Mat4x4 scale = {
+				Vector4(x, 0, 0, 0),
+				Vector4(0, y, 0, 0),
+				Vector4(0, 0, z, 0),
+				Vector4(0, 0, 0, 1),
+			};
+
+			return scale * (*this);
+		}
+
+		Vector4 rotateWithDegree(int axis, float degree) {
+			float radian = degree * (M_PI / 180.0f);
+			Mat4x4 rotate;
+			switch (axis) {
+			case 0: // X축에 대해 회전합니다
+				rotate = {
+					Vector4(1.0f, 0.0f, 0.0f, 0.0f),
+					Vector4(0.0f, std::cos(radian), -std::sin(radian), 0.0f),
+					Vector4(0.0f, std::sin(radian), std::cos(radian), 0.0f),
+					Vector4(0.0f, 0.0f, 0.0f, 1.0f),
+				};
+				break;
+			case 1: // Y축에 대해 회전합니다
+				rotate = {
+					Vector4(std::cos(radian), 0.0f, std::sin(radian), 0.0f),
+					Vector4(0.0f, 1.0f, 0.0f, 0.0f),
+					Vector4(-std::sin(radian), 0.0f, std::cos(radian), 0.0f),
+					Vector4(0.0f, 0.0f, 0.0f, 1.0f),
+				};
+				break;
+			case 2: // Z축에 대해 회전합니다
+				rotate = {
+					Vector4(std::cos(radian), -std::sin(radian), 0.0f, 0.0f),
+					Vector4(std::sin(radian), std::cos(radian), 0.0f, 0.0f),
+					Vector4(0.0f, 0.0f, 1.0f, 0.0f),
+					Vector4(0.0f, 0.0f, 0.0f, 1.0f),
+				};
+				break;
+			}
+			return rotate * (*this);
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const Vector4 vec4)

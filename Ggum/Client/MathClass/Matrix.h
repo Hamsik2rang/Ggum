@@ -262,7 +262,7 @@ namespace GG {
 
 
 		Mat4x4(Vector4 _r1 = { 1.0f, 0.0f, 0.0f, 0.0f }, Vector4 _r2 = { 0.0f, 1.0f, 0.0f, 0.0f }, Vector4 _r3 = { 0.0f, 0.0f, 1.0f, 0.0f }, Vector4 _r4 = { 0.0f, 0.0f, 0.0f, 1.0f }) {
-			r1 = _r1;
+			r1 =_r1;
 			r2 = _r2;
 			r3 = _r3;
 			r4 = _r4;
